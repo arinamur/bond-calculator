@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Калькулятор размещения облигаций</title>
+<meta name="description" content="Учебный калькулятор: как банку распределить выпуск облигаций между инвесторами и своим балансом и проходит ли сделка пороги IRR и ROE.">
+<style>
+:root{--bg:#f3f5f7;--fg:#1a2027;--mu:#58636f;--cd:#fff;--bd:#d3dae2;--ac:#0f5c6e;--ok:#146c36;--ob:#e0f2e6;--no:#a3231b;--nb:#fbe2df;--wn:#8a5a00;--wb:#fdf0d5;--chg:#c76a00;
+ --c1:#1f6fbf;--c2:#2a9d8f;--c3:#d99a22;--c4:#8a63b8;--c5:#b3bcc6;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12161a;--fg:#e6eaee;--mu:#97a2af;--cd:#1b2025;--bd:#313944;--ac:#5cc0d6;--ok:#62d08b;--ob:#14301e;--no:#ff8f86;--nb:#3a1d1b;--wn:#f3c46b;--wb:#3a2e14;--chg:#ffad4d;--c5:#56606b;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#12161a;--fg:#e6eaee;--mu:#97a2af;--cd:#1b2025;--bd:#313944;--ac:#5cc0d6;--ok:#62d08b;--ob:#14301e;--no:#ff8f86;--nb:#3a1d1b;--wn:#f3c46b;--wb:#3a2e14;--chg:#ffad4d;--c5:#56606b;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom,0px)}
+main{max-width:1280px;margin:0 auto;padding:12px 16px 40px}
+h2{font-size:17px;margin:20px 0 8px}h3{font-size:15px;margin:0 0 6px}
+.mu{color:var(--mu);font-size:13px}
+button,select,input{font:inherit;color:var(--fg);background:var(--cd);border:1px solid var(--bd);border-radius:7px;padding:6px 10px}
+button{cursor:pointer}button:hover{border-color:var(--ac)}
+button.p{background:var(--ac);border-color:var(--ac);color:var(--bg);font-weight:600}
+button.ln{border:0;background:none;color:var(--ac);padding:2px 4px;text-decoration:underline;text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.c{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.06);min-width:0}
+/* шапка */
+.hero{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;background:linear-gradient(120deg,var(--cd),color-mix(in srgb,var(--ac) 12%,var(--cd)));border:1px solid var(--bd);border-left:6px solid var(--ac);border-radius:12px;padding:14px 18px;margin:4px 0 10px}
+.hero h1{font-size:24px;letter-spacing:-.01em;margin:0 0 4px;color:var(--ac)}.hero p{margin:0;max-width:62ch;font-size:14px}
+.hero .mu2{font-size:12px;color:var(--mu);margin-top:4px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.bdg{display:inline-flex;gap:6px;align-items:center;padding:6px 11px;border-radius:20px;font-size:13px;font-weight:600;border:1px solid var(--bd);background:var(--cd)}
+.bdg.ok{color:var(--ok);background:var(--ob);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+.bdg.no{color:var(--no);background:var(--nb)}
+.bdg.chg{color:var(--chg)}
+/* сделки */
+#deals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+@media(max-width:820px){#deals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+button.dc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border-radius:10px;position:relative;min-width:0}
+button.dc b{font-size:15px}button.dc span{font-size:12px;color:var(--mu)}
+button.dc .st{font-size:12px;font-weight:600}
+button.dc.on{border:2px solid var(--ac);padding:9px 11px;background:color-mix(in srgb,var(--ac) 9%,var(--cd))}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--chg);flex:none}
+button.dc .dot{position:absolute;top:8px;right:8px}
+/* раскладка */
+.lay{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:900px){.lay{grid-template-columns:minmax(0,1fr)}}
+aside{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;padding:0!important}
+@media(max-width:900px){aside{position:static;max-height:none}}
+aside>details>summary{padding:12px 14px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px}
+aside>details>summary::-webkit-details-marker{display:none}
+aside>details>summary::after{content:'▾';color:var(--mu)}aside>details:not([open])>summary::after{content:'▸'}
+.pg{border-top:1px solid var(--bd);padding:8px 14px 12px}
+.pg h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);margin:4px 0 8px}
+.fl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.f{min-width:0;position:relative}
+.f.w2{grid-column:span 2}
+.f label{display:flex;gap:5px;align-items:center;font-size:13px;font-weight:500;min-height:20px}
+.f .in{display:flex;gap:4px;align-items:center;margin-top:2px}
+.f input,.f select{width:100%;min-width:0;padding:5px 8px}
+.f .u{font-size:12px;color:var(--mu);white-space:nowrap}
+.f small{display:block;font-size:11.5px;color:var(--mu);line-height:1.3;margin-top:2px}
+.f .rs{display:none;border:0;background:none;color:var(--chg);padding:0 4px;font-size:15px;line-height:1}
+.f.ch .rs{display:inline}.f .dot{display:none}.f.ch .dot{display:inline-block}
+.f.ch input,.f.ch select{border-color:var(--chg)}
+.f.bad input{border-color:var(--no);background:var(--nb)}
+.f.cb label{font-weight:400;align-items:flex-start}.f.cb input{width:auto;margin:2px 0 0}
+/* вкладки */
+nav{display:flex;gap:2px;flex-wrap:wrap;background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:4px;margin-bottom:10px}
+nav button{border:0;background:none;padding:7px 12px;border-radius:7px;font-weight:500}
+nav button.on{background:var(--ac);color:var(--bg)}
+section{display:none}section.on{display:block}
+/* результат */
+.vd{border-radius:12px;padding:14px 18px;border:1px solid;border-left-width:6px;background:var(--cd)}
+.vd.ok{border-color:var(--ok)}.vd.no{border-color:var(--no)}
+.vd .h{font-size:18px;font-weight:700;line-height:1.35}
+.vd ul{margin:8px 0 0;padding-left:20px}.vd li{margin:3px 0}
+.vd .why{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);margin-top:10px}
+.bar{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid var(--bd);margin:6px 0}
+.bar div{min-width:0}
+.lg{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px;color:var(--mu)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.kp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}
+@media(max-width:700px){.kp{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kp .c{border-top:3px solid var(--ac)}
+.kp b{display:block;font-size:24px;letter-spacing:-.02em;margin:2px 0 4px}
+.ch2{padding:2px 8px;border-radius:12px;font-weight:600;display:inline-block;font-size:12px}
+.ok2{color:var(--ok);background:var(--ob)}.no2{color:var(--no);background:var(--nb)}.na2{color:var(--mu);background:color-mix(in srgb,var(--mu) 12%,transparent)}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}
+@media(max-width:700px){.g2{grid-template-columns:minmax(0,1fr)}}
+.sp{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--bd);font-size:14px}
+.sp:last-child{border-bottom:0}.sp b{white-space:nowrap}
+.pos{color:var(--ok)}.neg{color:var(--no)}.zer{color:var(--mu)}
+details.dt{margin:10px 0}details.dt>summary{cursor:pointer;font-weight:600;padding:10px 14px;background:var(--cd);border:1px solid var(--bd);border-radius:10px}
+details.dt[open]>summary{border-radius:10px 10px 0 0}
+details.dt>.c{border-radius:0 0 10px 10px;border-top:0}
+.w{overflow-x:auto;max-width:100%}
+.t{width:100%;border-collapse:collapse;font-size:13px}
+.t th,.t td{padding:5px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
+.t th:first-child,.t td:first-child{text-align:left}
+.t th{font-weight:600;color:var(--mu);font-size:12px;border-bottom:2px solid var(--bd)}
+.t tr.s td{font-weight:700}.t tr.cur td{background:color-mix(in srgb,var(--ac) 12%,transparent)}
+.t tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--fg) 3%,transparent)}
+.t td.l{text-align:left;white-space:normal}
+.er{color:var(--no);background:var(--nb);padding:8px 12px;border-radius:8px;margin:6px 0}
+.nt{color:var(--wn);background:var(--wb);padding:8px 12px;border-radius:8px;margin:6px 0;font-size:14px}
+.ld{color:var(--mu);font-size:13px;font-style:italic}
+.tp{text-decoration:none;border-bottom:1px dotted var(--mu);cursor:help}
+#tt{position:fixed;display:none;max-width:290px;background:var(--fg);color:var(--bg);padding:8px 11px;border-radius:8px;font-size:13px;line-height:1.4;z-index:40;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none}
+.ckl{list-style:none;padding:0;margin:0}.ckl li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 6px;padding:7px 0;border-bottom:1px solid var(--bd)}
+.ckl .d{grid-column:2;font-size:12.5px;color:var(--mu)}
+dt{font-weight:600;margin-top:8px}dd{margin:2px 0 0;color:var(--mu)}
+ol.mt li{margin:5px 0}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+/* подсказки первого запуска */
+#tour{position:fixed;z-index:50;max-width:320px;background:var(--cd);border:2px solid var(--ac);border-radius:12px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.25);display:none}
+#tour .n{font-size:12px;color:var(--mu)}#tour p{margin:4px 0 10px}
+.hl{outline:3px solid var(--ac)!important;outline-offset:3px;border-radius:10px;position:relative;z-index:45}
+/* P1 */
+.hm{display:block;width:100%;max-width:560px;image-rendering:pixelated;border:1px solid var(--bd);border-radius:6px;background:var(--cd);touch-action:none}
+.trn{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 10px;align-items:center;font-size:13px}
+.trn .tb{position:relative;height:20px}
+.trn .tb i{position:absolute;top:2px;height:16px;border-radius:3px}
+.trn .tb::before{content:'';position:absolute;left:50%;top:0;bottom:0;border-left:1px solid var(--mu)}
+.sl{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) 90px;gap:6px 10px;align-items:center;font-size:13px}
+.sl input[type=range]{width:100%;padding:0}
+.sl input[type=number]{width:90px;padding:4px 6px}
+.mx td{text-align:center!important;white-space:normal!important;font-size:12px}
+/* ассистент */
+#ab{position:fixed;right:16px;bottom:16px;z-index:35;border-radius:24px;padding:10px 16px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+#aw{position:fixed;right:16px;bottom:70px;z-index:36;width:min(380px,calc(100vw - 32px));max-height:min(560px,calc(100vh - 100px));display:none;flex-direction:column;padding:0;overflow:hidden}
+#aw.on{display:flex}
+#aw header{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+#am{flex:1;overflow:auto;padding:10px 14px;display:flex;flex-direction:column;gap:8px;min-height:120px}
+.msg{padding:8px 11px;border-radius:10px;font-size:14px;max-width:92%;white-space:pre-wrap}
+.msg.u{align-self:flex-end;background:color-mix(in srgb,var(--ac) 16%,var(--cd))}
+.msg.a{align-self:flex-start;background:color-mix(in srgb,var(--fg) 6%,var(--cd))}
+#aq{display:flex;gap:6px;padding:10px;border-top:1px solid var(--bd)}#aq input{flex:1;min-width:0}
+.sug{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 8px}.sug button{font-size:12px;padding:4px 8px;border-radius:14px}
+@media print{aside,nav,#ab,#aw,.badges,button{display:none!important}section{display:block!important}.lay{display:block}}
+</style></head><body><main>
+<header class="hero"><div><h1>Калькулятор размещения облигаций</h1>
+<p>Подсказывает, сколько облигаций банку продать инвесторам на размещении, сколько взять на свой баланс и проходит ли сделка пороги доходности на капитал.</p>
+<div class="mu2">Учебная модель v<span id="ver"></span> · числа вымышлены · не инвестиционная рекомендация</div></div>
+<div class="badges"><button class="bdg" id="bChk" title="Контрольные примеры, которые прогоняются при загрузке">…</button><span class="bdg chg" id="bChg" hidden></span><button class="bdg" id="bTour" title="Показать подсказки ещё раз">? Как пользоваться</button></div></header>
+<div id="deals"></div>
+<div class="lay">
+<aside class="c" id="params"></aside>
+<div id="out" style="min-width:0">
+<nav id="nv"></nav>
+<div id="er"></div>
+<section id="t-res"></section>
+<section id="t-scen"></section>
+<section id="t-cmp"></section>
+<section id="t-chk"></section>
+<section id="t-met"></section>
+</div></div>
+</main>
+<div id="tour" role="dialog" aria-live="polite"></div>
+<div class="toast" id="toast"></div>
+<button id="ab" class="p" aria-controls="aw" aria-expanded="false">💬 Спросить ассистента</button>
+<div id="aw" class="c" role="dialog" aria-label="ИИ-ассистент">
+<header><div><b>ИИ-ассистент</b><div class="mu" style="font-size:12px">Объясняет текущий расчёт и методику. Может ошибаться.</div></div><button class="ln" id="ax" aria-label="Закрыть">✕</button></header>
+<div id="am"><div class="msg a">Здравствуйте! Я вижу текущий расчёт на экране и отвечаю по нему и по методике. Числа беру только из расчёта.</div></div>
+<div class="sug" id="as"><button>Почему банк не берёт больше на баланс?</button><button>Что значит IRR на капитал?</button><button>Что будет, если спрос упадёт на 20%?</button></div>
+<form id="aq"><input id="ai" maxlength="500" placeholder="Ваш вопрос (до 500 символов)" autocomplete="off"><button class="p" type="submit">→</button></form>
+</div>
+<script>
+(()=>{const w=document.getElementById('aw'),m=document.getElementById('am'),inp=document.getElementById('ai'),hist=[];let busy=false;
+ const open=v=>{w.classList.toggle('on',v);document.getElementById('ab').setAttribute('aria-expanded',v);if(v)inp.focus()};
+ document.getElementById('ab').onclick=()=>open(!w.classList.contains('on'));document.getElementById('ax').onclick=()=>open(false);
+ const add=(t,c)=>{const d=document.createElement('div');d.className='msg '+c;d.textContent=t;m.appendChild(d);m.scrollTop=m.scrollHeight;return d};
+ /* мягкий лимит на стороне страницы; основной — в функции */
+ const lim=()=>{const now=Date.now(),day=new Date().toDateString();let s;try{s=JSON.parse(localStorage.getItem('askLim')||'{}')}catch(e){s={}}
+  if(s.day!==day)s={day,n:0,t:[]};s.t=(s.t||[]).filter(x=>now-x<60000);if(s.t.length>=10)return'Не больше 10 вопросов в минуту. Подождите немного.';if(s.n>=50)return'Лимит 50 вопросов в день исчерпан.';
+  s.t.push(now);s.n++;try{localStorage.setItem('askLim',JSON.stringify(s))}catch(e){}return null};
+ async function ask(q){q=q.trim().slice(0,500);if(!q||busy)return;const l=lim();add(q,'u');if(l){add(l,'a');return}
+  busy=true;const p=add('Думаю…','a');
+  try{if(location.protocol=='file:')throw new Error('file');
+   const r=await fetch('/.netlify/functions/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,state:window.calcState?window.calcState():null,history:hist.slice(-6)})});
+   const j=await r.json().catch(()=>({}));p.textContent=j.answer||'Ассистент сейчас занят, попробуйте через минуту.';
+   if(j.answer){hist.push({role:'user',content:q},{role:'assistant',content:j.answer})}}
+  catch(e){p.textContent=e.message=='file'?'Ассистент работает в опубликованной версии калькулятора (на Netlify). В файле, открытом с диска, он недоступен.':'Ассистент сейчас занят, попробуйте через минуту.'}
+  busy=false}
+ document.getElementById('aq').onsubmit=e=>{e.preventDefault();const q=inp.value;inp.value='';ask(q)};
+ document.getElementById('as').onclick=e=>{if(e.target.tagName=='BUTTON')ask(e.target.textContent)};
+})();
+</script>
+
+<script>
+/* ===== Расчётное ядро (без DOM). Объёмы и деньги в млрд ₽, ставки в % годовых ===== */
+const MODEL_VERSION='2.1';
+const r6=x=>Math.round(x*1e6)/1e6;
+const D0=[
+{id:'A',n:'А · Уралмет',rt:'AA',V:20,T:36,ct:'float',cv:1.8,fee:.25,pd:.4,rw:65,lim:8,di:6,dr:1.5,sr:.4},
+{id:'B',n:'Б · Нефтегаз Восток',rt:'AAA',V:15,T:36,ct:'float',cv:1.4,fee:.15,pd:.2,rw:65,lim:30,di:5,dr:1,sr:.5},
+{id:'C',n:'В · Аурум Майнинг',rt:'AA-',V:10,T:24,ct:'float',cv:2.4,fee:.3,pd:.8,rw:100,lim:4,di:3,dr:1,sr:.3},
+{id:'D',n:'Г · Город N',rt:'AA',V:10,T:60,ct:'fixed',cv:15.5,fee:.2,pd:.3,rw:20,lim:3,di:4,dr:.5,sr:.2}];
+/* kin: доход на капитал inc|exp|off; psb: 90% от доли банка (bank) или от всей комиссии (all);
+   irrB: IRR по потокам после налога (post) или до (pre); fbal: комиссия и с объёма на баланс */
+const G0={ym:'2026-12',fa:.2,bs:50,ps:90,eco:1,lgd:45,rwr:120,cr:12,tax:25,sec:.54,irrT:30,roeT:26.5,step:.1,
+k1:14,k2:13.5,k3:12,k4:11,kd:0,rf:1,kin:'exp',psb:'bank',irrB:'post',fbal:1};
+
+function KC(g,k){const [y,m]=g.ym.split('-').map(Number),a=y*12+m-1+k-1;
+ return (a<=2027*12+5?g.k1:a<=2027*12+11?g.k2:a<2029*12?g.k3:g.k4)+(g.kd||0)}
+const _kc=new WeakMap();
+function kcArr(g,T){const key=g.ym+'|'+g.k1+'|'+g.k2+'|'+g.k3+'|'+g.k4+'|'+(g.kd||0);let c=_kc.get(g);
+ if(!c||c.key!==key||c.v.length<=T){c={key,v:[0]};for(let k=1;k<=Math.max(T,120);k++)c.v.push(KC(g,k));_kc.set(g,c)}return c.v}
+function mlabel(g,k){const [y,m]=g.ym.split('-').map(Number),a=y*12+m-1+k;return String(a%12+1).padStart(2,'0')+'.'+Math.floor(a/12)}
+
+/* помесячный профиль позиции объёмом amt: p — остаток на начало месяца, s — продано в конце месяца */
+function unit(d,g,resale,amt){const o={p:[],c:[],f:[],e:[],s:[],i:[]},K=kcArr(g,d.T);let p=amt;
+ for(let k=1;k<=d.T;k++){const kc=K[k],r=d.ct=='fixed'?d.cv:kc+d.cv,s=resale&&k>=2?Math.min(d.sr,p):0;
+  o.p.push(p);o.c.push(p*r/1200);o.f.push(p*(kc+g.fa)/1200);o.e.push(p*d.pd*g.lgd/12e4);o.s.push(s);o.i.push(s*g.sec/100);p=r6(p-s)}
+ return o}
+
+/* экономика одного распределения a,b,q,h */
+function ev(d,g,a,b,q,h,R,H,det){const T=d.T,cr=g.cr/100,rr=g.rwr/100,rb=d.rw/100;
+ const fBank=d.fee/100*g.bs/100;                         // доля банка от объёма
+ const payRate=(g.psb=='all'?d.fee/100:fBank)*g.ps/100;   // сколько отдаём институционалам с единицы a
+ const L={com:a*fBank,pay:-a*payRate,rcm:g.rf?b*fBank:0,eco:b*g.eco/100,fbal:g.fbal?(q+h)*fBank:0,cpn:0,fnd:0,el:0,sec:0,kin:0};
+ const sgn=g.kin=='inc'?1:g.kin=='exp'?-1:0,K=kcArr(g,T);
+ const cap=k=>k>T?0:(R.p[k-1]*rr+h*rb)*cr;
+ const m=[L.com+L.pay+L.rcm+L.eco+L.fbal],caps=[];let cs=0;
+ for(let k=1;k<=T;k++){const c=R.c[k-1]+h*H.c[k-1],fd=R.f[k-1]+h*H.f[k-1],e=R.e[k-1]+h*H.e[k-1],si=R.i[k-1],cp=cap(k),
+  ki=sgn?sgn*cp*(K[k]+g.fa)/1200:0;
+  L.cpn+=c;L.fnd-=fd;L.el-=e;L.sec+=si;L.kin+=ki;cs+=cp;caps.push(cp);m.push(c-fd-e+si+ki)}
+ const pre=m.reduce((s,x)=>s+x,0),tax=pre>0?pre*g.tax/100:0,net=pre-tax;
+ const tf=g.irrB=='pre'?1:(pre>0?1-g.tax/100:1);
+ const f=m.map((x,k)=>x*tf+(k==0?-cap(1):cap(k)-cap(k+1)));
+ const o={a,b,q,h,L,pre,tax,net,cap0:cap(1),avg:cs/T,capSum:cs,roe:cs>1e-12?net*12/cs:null,f,un:r6(d.V-a-b-q-h)};
+ if(det){o.rows=[];for(let k=1;k<=T;k++){const c=R.c[k-1]+h*H.c[k-1],fd=R.f[k-1]+h*H.f[k-1],e=R.e[k-1]+h*H.e[k-1];
+  o.rows.push({k,mon:mlabel(g,k),kc:KC(g,k),pos:R.p[k-1]+h,posQ:R.p[k-1],sold:R.s[k-1],cpn:c,fnd:-fd,el:-e,sec:R.i[k-1],kin:sgn*caps[k-1]*(KC(g,k)+g.fa)/1200,cap:caps[k-1],pre:m[k],flow:f[k]})}
+  o.flow0=f[0];o.m0=m[0]}
+ return o}
+
+/* годовой IRR по помесячным потокам (бисекция по месячной ставке) */
+function irr(f){if(!f.some(x=>x<-1e-12))return Infinity;const n=r=>f.reduce((s,x,k)=>s+x/Math.pow(1+r,k),0);
+ let lo=-.99,hi=20;if(n(hi)>0)return Infinity;if(n(lo)<0)return -1;
+ for(let i=0;i<100;i++){const md=(lo+hi)/2;n(md)>0?lo=md:hi=md}return Math.pow(1+lo,12)-1}
+
+const thr=(e,g)=>{const io=e.cap0<=1e-12||e.irr*100>=g.irrT,ro=e.roe==null||e.roe*100>=g.roeT;return{io,ro,ok:io&&ro}};
+
+/* доход на единицу в каналах размещения */
+function chanUnit(d,g){const fBank=d.fee/100*g.bs/100,pay=(g.psb=='all'?d.fee/100:fBank)*g.ps/100;
+ return{a:fBank-pay,b:(g.rf?fBank:0)+g.eco/100}}
+
+/* подбор: перебор q,h с шагом, a и b добираются до спроса по убыванию дохода на единицу (только если доход > 0).
+   opts.grid — вернуть все варианты (для карты решений); opts.fix — {q,h} зафиксировать балансовую часть */
+function opt(d,g,opts={}){const st=g.step,V=d.V,mq=Math.min(d.lim,V),H=unit(d,g,false,1),Rc={},u=chanUnit(d,g);
+ const ord=u.b>=u.a?['b','a']:['a','b'],dem={a:d.di,b:d.dr},cs=[];
+ const fill=(q,h)=>{let rest=r6(V-q-h);const x={a:0,b:0};for(const c of ord){if(u[c]>0){x[c]=Math.max(0,Math.min(dem[c],rest));rest=r6(rest-x[c])}}return x};
+ const mk=(q,h)=>{const R=Rc[q]||(Rc[q]=unit(d,g,true,q)),x=fill(q,h);return ev(d,g,x.a,x.b,q,h,R,H)};
+ if(opts.fix){const e=mk(r6(opts.fix.q),r6(opts.fix.h));e.irr=irr(e.f);Object.assign(e,thr(e,g));e.pass=e.ok;e.n=1;return e}
+ const nq=Math.floor(mq/st+1e-9);
+ for(let i=0;i<=nq;i++){const q=r6(i*st);for(let j=0;i+j<=nq;j++){const h=r6(j*st);cs.push(mk(q,h))}}
+ for(const e of cs)e.ro=e.roe==null||e.roe*100>=g.roeT;
+ const srt=cs.filter(e=>e.ro).sort((x,y)=>Math.abs(y.net-x.net)>1e-12?y.net-x.net:x.cap0-y.cap0);let best=null;
+ for(const e of srt){e.irr=irr(e.f);e.io=e.cap0<=1e-12||e.irr*100>=g.irrT;if(e.io){best=e;break}}
+ const pass=!!best;
+ if(!best){best=cs.reduce((m,e)=>e.net>m.net+1e-12||(Math.abs(e.net-m.net)<=1e-12&&e.cap0<m.cap0)?e:m);best.irr=irr(best.f)}
+ Object.assign(best,thr(best,g));best.pass=pass;best.n=cs.length;
+ if(opts.grid){for(const e of cs)if(e.irr===undefined){e.irr=irr(e.f)}for(const e of cs)Object.assign(e,thr(e,g));best.grid=cs}
+ return best}
+
+/* детализация выбранного распределения */
+function detail(d,g,e){return ev(d,g,e.a,e.b,e.q,e.h,unit(d,g,true,e.q),unit(d,g,false,1),true)}
+
+/* какие ограничения упёрлись */
+function binding(d,g,e){const t=1e-6,o=[];
+ if(e.a>0&&e.a>=d.di-t)o.push('di');if(e.b>0&&e.b>=d.dr-t)o.push('dr');
+ if(e.q+e.h>=Math.min(d.lim,d.V)-t&&d.lim<d.V)o.push('lim');if(e.un<=t)o.push('V');
+ if(e.roe!=null&&Math.abs(e.roe*100-g.roeT)<=.5)o.push('roe');if(e.cap0>1e-12&&isFinite(e.irr)&&Math.abs(e.irr*100-g.irrT)<=.5)o.push('irr');
+ return o}
+
+/* цена ограничений: пересчёт подбора с ослабленным ограничением */
+function shadow(d,g,e){const base=e.net,L=[
+ ['lim','+1 млрд ₽ свободного лимита','лимит на заёмщика',{lim:d.lim+1}],
+ ['di','+10% спроса институционалов','спрос институционалов',{di:d.di*1.1}],
+ ['dr','+10% спроса частных','спрос частных',{dr:d.dr*1.1}],
+ ['sr','+10% темпа продаж с баланса','темп продаж с баланса',{sr:d.sr*1.1}],
+ ['roeT','порог ROE на 1 п.п. ниже','порог ROE',null,{roeT:g.roeT-1}],
+ ['irrT','порог IRR на 1 п.п. ниже','порог IRR',null,{irrT:g.irrT-1}]];
+ return L.map(([k,l,sh,dd,gg])=>{const x=opt(dd?{...d,...dd}:d,gg?{...g,...gg}:g);return{k,l,s:sh,dn:x.net-base,x}})}
+
+/* делением пополам: минимальное/максимальное значение параметра, при котором выполняется cond */
+function bisect(f,lo,hi,it=20){/* f(lo)=false, f(hi)=true; ищем границу */
+ let a=lo,b=hi;if(f(a))return{v:a,edge:true};if(!f(b))return null;for(let i=0;i<it;i++){const m=(a+b)/2;f(m)?b=m:a=m}return{v:b}}
+
+/* что нужно, чтобы банк мог взять на баланс весь доступный лимит и пройти оба порога */
+function needTarget(d){return r6(Math.min(d.lim,Math.max(0,d.V-d.di-d.dr)))}
+function needs(d,g){const mq=needTarget(d);if(mq<=0)return [];
+ const fullOK=dd=>{const best=bestBalance(dd,g,mq);return best&&best.ok};
+ const out=[];
+ const sp=bisect(v=>fullOK({...d,cv:v}),d.cv,d.cv+(d.ct=='fixed'?15:10));out.push({k:'cv',l:d.ct=='fixed'?'фиксированная ставка купона не ниже':'спред к КС не ниже',u:d.ct=='fixed'?'%':'п.п.',cur:d.cv,r:sp});
+ const sr=bisect(v=>fullOK({...d,sr:v}),d.sr,Math.max(mq,d.sr*10));out.push({k:'sr',l:'темп продаж с баланса не ниже',u:'млрд ₽/мес',cur:d.sr,r:sr});
+ const rw=bisect(v=>fullOK({...d,rw:v}),d.rw,0);out.push({k:'rw',l:'риск-вес заёмщика не выше',u:'%',cur:d.rw,r:rw});
+ return out}
+/* лучший проходящий вариант при q+h = заданному объёму (весь лимит) */
+function bestBalance(d,g,tot){const st=g.step,H=unit(d,g,false,1),n=Math.round(tot/st),u=chanUnit(d,g);let best=null;
+ const rest=r6(d.V-tot),b=u.b>0?Math.min(d.dr,rest):0,a=u.a>0?Math.min(d.di,r6(rest-b)):0;
+ for(let i=0;i<=n;i++){const q=r6(Math.min(tot,i*st)),h=r6(tot-q),e=ev(d,g,a,b,q,h,unit(d,g,true,q),H);
+  if(!(e.roe==null||e.roe*100>=g.roeT)||(best&&e.net<=best.net))continue;e.irr=irr(e.f);Object.assign(e,thr(e,g));if(e.ok)best=e}
+ return best}
+
+/* сценарии спроса: mode mul — спрос × (1±X); vol — суммарный спрос = объём выпуска × (1±X), доли сегментов как в базе */
+function scenDemand(d,s,mode,sI=1,sR=1){if(mode=='vol'){const tot=d.di+d.dr||1,D=d.V*(1+s);return{...d,di:D*d.di/tot,dr:D*d.dr/tot}}
+ return{...d,di:d.di*(sI?1+s:1),dr:d.dr*(sR?1+s:1)}}
+
+/* все варианты спорных допущений */
+const ASSUME=[
+ {k:'psb',l:'90% комиссии институционалам — от чего',v:[['bank','от доли банка (50%)'],['all','от всей комиссии']]},
+ {k:'kin',l:'Доход на капитал',v:[['inc','доход'],['exp','расход'],['off','не учитывать']]},
+ {k:'irrB',l:'База IRR',v:[['post','после налога'],['pre','до налога']]}];
+
+/* самопроверки */
+function selfChecks(){const g={...G0},d=D0[0],C=[],add=(n,ok,det)=>C.push({n,ok:!!ok,det});
+ const near=(x,y,t=1e-9)=>Math.abs(x-y)<=t;
+ const u=unit(d,g,false,1),cpn=u.c[0]*1200;add('Купон: КС 14% + спред 1,8 п.п. = 15,8%',near(cpn,15.8),N(cpn)+'%');
+ const uf=unit(D0[3],g,false,1),cf=uf.c[0]*1200,cf2=unit(D0[3],{...g,k1:20},false,1).c[0]*1200;add('Фикс 15,5% не зависит от КС',near(cf,15.5)&&near(cf2,15.5),N(cf)+'% при КС 14%, '+N(cf2)+'% при КС 20%');
+ const fd=u.f[0]*1200;add('Фондирование при КС 14% = 14,2%',near(fd,14.2),N(fd)+'%');
+ const el=u.e[0]*1200;add('Ожидаемые потери при PD 0,4% и LGD 45% = 0,18% в год',near(el,.18),N(el,3)+'%');
+ const R0=unit(d,g,true,0),e1=ev(d,g,0,0,0,.1,R0,u);add('Капитал: 100 млн × 65% × 12% = 7,8 млн',near(e1.cap0*1e3,7.8,1e-6),N(e1.cap0*1e3,3)+' млн');
+ const e2=ev(d,g,0,0,.1,0,unit(d,g,true,.1),u);add('Перепродажа: 100 млн × 120% × 12% = 14,4 млн',near(e2.cap0*1e3,14.4,1e-6),N(e2.cap0*1e3,3)+' млн');
+ const Rs=unit(d,g,true,5);let okS=Rs.s[0]===0,okP=true;for(let k=1;k<d.T;k++){if(Rs.s[k]>d.sr+1e-9||Rs.s[k]>Rs.p[k]+1e-9)okP=false}
+ add('В 1-й месяц продаж с баланса нет',okS,'продано в 1-й месяц: '+Rs.s[0]);add('Продажа ≤ темпа и ≤ остатка',okP,'5 млрд при темпе 0,4: '+Rs.s.filter(x=>x>0).length+' мес. продаж');
+ let okC=true;for(const dd of D0){const e=opt(dd,g);if(e.a>dd.di+1e-9||e.b>dd.dr+1e-9||e.q+e.h>dd.lim+1e-9||e.a+e.b+e.q+e.h>dd.V+1e-9||[e.a,e.b,e.q,e.h].some(x=>x<-1e-12))okC=false}
+ add('Каналы ≤ спроса, баланс ≤ лимита, сумма ≤ выпуска (4 сделки)',okC,okC?'все ограничения соблюдены':'нарушение');
+ const bad={...d,cv:-5},eb=ev(bad,g,0,0,0,1,unit(bad,g,true,0),unit(bad,g,false,1));add('Налог 0 при убытке',eb.pre<0&&eb.tax===0,'прибыль до налога '+N(eb.pre*1e3,1)+' млн, налог '+eb.tax);
+ const ea=ev(d,g,6,0,0,0,R0,u),cm=(ea.L.com+ea.L.pay)*1e3;add('Комиссия Уралмета с 6 млрд институционалам = +0,75 млн',near(cm,.75,1e-6),N(cm,3)+' млн');
+ const x1=opt(d,g),x2=opt(d,g);add('Повторный расчёт даёт тот же результат',x1.net===x2.net&&x1.q===x2.q&&x1.h===x2.h,'прибыль '+N(x1.net*1e3,3)+' и '+N(x2.net*1e3,3)+' млн');
+ const tt=thr({cap0:1,irr:.4,roe:.2646},g);add('Порог без округления: ROE 26,46% не проходит 26,5%',!tt.ro,'ROE 26,46% → '+(tt.ro?'проходит':'не проходит'));
+ const ef=ev(d,g,0,0,0,1,R0,u),sf=ef.f.reduce((s,x)=>s+x,0);add('IRR по потокам после налога: сумма потоков = прибыль после налога',near(sf,ef.net,1e-9),'сумма потоков '+N(sf*1e3,3)+' млн, прибыль '+N(ef.net*1e3,3)+' млн');
+ /* эталон из независимой реализации (стенд «Баланс» в тренажёре): 2 млрд Уралмета, доход на капитал = доход */
+ const gi={...g,kin:'inc',fbal:0},eh=ev(d,gi,0,0,0,2,R0,u);eh.irr=irr(eh.f);add('Совпадает с независимым расчётом (тренажёр, режим «доход на капитал»): 2 млрд до погашения',near(eh.net*1e3,107.892,.001)&&near(eh.irr*100,25.856,.001)&&near(eh.roe*100,23.054,.001),'прибыль '+N(eh.net*1e3,3)+' млн (эталон 107,892), IRR '+N(eh.irr*100,3)+'% (25,856), ROE '+N(eh.roe*100,3)+'% (23,054)');
+ const er=ev(d,gi,0,0,2,0,unit(d,gi,true,2),u);er.irr=irr(er.f);add('Совпадает с независимым расчётом (тренажёр): 2 млрд на перепродажу',near(er.net*1e3,25.424,.001)&&near(er.irr*100,29.660,.001)&&near(er.roe*100,26.483,.001),'прибыль '+N(er.net*1e3,3)+' млн (эталон 25,424), IRR '+N(er.irr*100,3)+'% (29,660), ROE '+N(er.roe*100,3)+'% (26,483)');
+ return C}
+
+/* N — форматирование числа (общая с интерфейсом) */
+function N(v,n=2){return (+v).toLocaleString('ru-RU',{maximumFractionDigits:n})}
+if(typeof module!='undefined')module.exports={needTarget,D0,G0,KC,unit,ev,irr,opt,detail,binding,shadow,needs,scenDemand,selfChecks,ASSUME,chanUnit,bestBalance,thr,MODEL_VERSION};
+
+</script>
+<script>
+/* ===== Интерфейс ===== */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const M=v=>N(v*1e3,1)+' млн ₽',Ms=v=>(v>0?'+':v<0?'−':'')+N(Math.abs(v*1e3),1)+' млн ₽',B=v=>N(v)+' млрд ₽',P=v=>v==null?'н/п':isFinite(v)?N(v*100,2)+'%':'∞';
+const iv=e=>e.cap0<=1e-12?'н/п':P(e.irr),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+const TIP={'Объём выпуска':'Общая сумма облигаций, которую выпускает компания.','Срок':'На сколько месяцев выпущены облигации. Номинал возвращается в конце срока.','КС':'Ключевая ставка Банка России. От неё зависят плавающий купон и стоимость денег для банка.','Купон':'Проценты, которые заёмщик платит держателям облигации. Здесь выплаты ежемесячные.','Спред':'Надбавка к ключевой ставке в процентных пунктах (п.п.). Плавающий купон = КС + спред.','Комиссия организатора':'Процент от объёма, который компания платит организаторам размещения. Банку достаётся только часть.','PD':'Вероятность дефолта: шанс, что заёмщик перестанет платить, в течение года.','LGD':'Доля долга, которую банк теряет, если заёмщик не заплатил.','Ожидаемые потери':'Ожидаемый убыток от дефолтов: позиция × PD × LGD. Это оценка, а не реальный убыток.','Риск-вес':'Насколько рискованной считается позиция. Чем выше вес, тем больше капитала банк держит под неё.','Свободный лимит':'Максимальная сумма, которую банк может держать на балансе по этому заёмщику.','Институционалы':'Крупные профессиональные инвесторы: фонды, страховые компании, банки.','Частные инвесторы':'Обычные клиенты банка, которые покупают облигации для себя.','Фондирование':'Стоимость денег, на которые банк покупает облигации: КС плюс надбавка. Это расход банка.','Перепродажа':'Банк покупает облигации на баланс и со 2-го месяца постепенно продаёт их частным инвесторам, зарабатывая на каждой продаже.','До погашения':'Банк покупает облигации на баланс и держит до конца срока, получая купоны.','Капитал':'Собственные деньги банка, которые приходится держать под риск позиции: позиция × риск-вес × норматив капитала.','Доход на капитал':'Капитал × ставка фондирования. По ответу работодателя это расход: капитал «стоит» банку столько же, сколько фондирование. Можно переключить на доход или выключить.','Экосистемный доход':'Дополнительный доход банка от продажи облигаций своим частным клиентам.','Налог':'Берётся с положительной прибыли. Убыток налог не уменьшает.','Прибыль после налога':'Всё, что банк заработал по сделке за весь срок, за вычетом расходов и налога.','IRR':'Годовая доходность на вложенный капитал с учётом того, когда приходят деньги. Считается по потокам после налога.','ROE':'Отдача на капитал: годовая прибыль после налога, делённая на средний капитал.','Поток на капитал':'Сколько банк получает (+) или вкладывает (−) в месяц: прибыль после налога плюс высвобождение капитала. По этим потокам считается IRR.','Не распределено':'Часть выпуска, которую банк не берёт: не хватило спроса, лимита или доходности. Банк не организатор и не обязан выкупать весь выпуск.','Шаг подбора':'С каким шагом калькулятор перебирает объёмы. Меньше шаг — точнее, но дольше.','Порог':'Минимальная доходность, которую банк требует от сделки.'};
+const tp=(k,l)=>`<abbr class="tp" tabindex="0" data-tip="${esc(TIP[k]||'')}">${l||k}</abbr>`;
+
+/* описание полей: [ключ, подпись, единица, подсказка, термин] */
+const DF=[['V','Объём выпуска','млрд ₽','Размер всего выпуска','Объём выпуска'],['T','Срок','мес.','Через столько месяцев вернётся номинал','Срок'],['ct','Тип купона','','','Купон'],['cv','Спред к КС','п.п.','Для фиксированного купона — сама ставка, %','Спред'],['fee','Комиссия организатора','%','От объёма размещения','Комиссия организатора'],['pd','PD годовая','%','Шанс дефолта заёмщика за год','PD'],['rw','Риск-вес заёмщика','%','Для позиции «до погашения»','Риск-вес'],['lim','Свободный лимит','млрд ₽','Максимум на балансе банка','Свободный лимит'],['di','Спрос институционалов','млрд ₽','Больше они не купят','Институционалы'],['dr','Спрос частных на размещении','млрд ₽','Больше частные не купят','Частные инвесторы'],['sr','Продажи с баланса','млрд ₽/мес','Темп перепродажи частным со 2-го месяца','Перепродажа']];
+const GF=[
+ ['Ключевая ставка и фондирование',[['ym','Дата размещения','','Отсюда начинаются потоки'],['k1','КС до июня 2027','%','','КС'],['k2','КС, июль–дек. 2027','%','','КС'],['k3','КС, 2028','%','','КС'],['k4','КС, с 2029','%','','КС'],['fa','Надбавка фондирования','п.п.','Банк занимает по КС + надбавка','Фондирование']]],
+ ['Комиссии и доходы',[['bs','Доля комиссии банку','%','Часть комиссии организатора','Комиссия организатора'],['ps','Отдаём институционалам','%','Часть комиссии с их объёма','Институционалы'],['eco','Экосистемный доход','%','С продаж частным на размещении','Экосистемный доход'],['sec','Доход с продажи с баланса','%','С каждой продажи частному','Перепродажа']]],
+ ['Риск, капитал, налог',[['lgd','LGD','%','Потери при дефолте','LGD'],['rwr','Риск-вес «на перепродажу»','%','','Риск-вес'],['cr','Норматив капитала','%','Капитал = позиция × риск-вес × норматив','Капитал'],['tax','Налог на прибыль','%','','Налог']]],
+ ['Пороги и подбор',[['irrT','Порог IRR','%','','IRR'],['roeT','Порог ROE','%','','ROE'],['step','Шаг подбора','млрд ₽','Меньше — точнее, но дольше','Шаг подбора']]],
+ ['Спорные допущения',[['kin','Доход на капитал','','Капитал × фондирование. Работодатель: расход','Доход на капитал',[['exp','расход (стоимость капитала)'],['inc','доход (экономия фондирования)'],['off','не учитывать']]],['psb','90% институционалам — от чего','','Работодатель: от 50% банка','Комиссия организатора',[['bank','от доли банка (банку остаётся 5%)'],['all','от всей комиссии организатора']]],['irrB','База IRR','','Наш выбор: после налога, как ROE','IRR',[['post','потоки после налога'],['pre','потоки до налога']]],['rf','Комиссия банку и с объёма частных на размещении','cb'],['fbal','Комиссия банку и с объёма на баланс','cb']]]];
+const SEL={ct:[['float','плавающий: КС + спред'],['fixed','фиксированный']]};
+GF.forEach(([,fs])=>fs.forEach(f=>{if(f[5])SEL[f[0]]=f[5]}));
+const LBL={};DF.forEach(f=>LBL[f[0]]=f[1]);GF.forEach(([,fs])=>fs.forEach(f=>LBL[f[0]]=f[1]));
+
+let S={i:0,D:structuredClone(D0),G:{...G0},res:null,tab:'res',X:20,scM:'mul',sI:1,sR:1,man:null,ver:0,trn:'roe'};
+const CHECKS=selfChecks();
+
+/* ---------- изменения относительно исходных ---------- */
+const same=(a,b)=>typeof a=='number'&&typeof b=='number'?Math.abs(a-b)<1e-12:a===b;
+const chD=i=>Object.keys(D0[i]).filter(k=>!['id','n','rt'].includes(k)&&!same(S.D[i][k],D0[i][k]));
+const chG=()=>Object.keys(G0).filter(k=>k!='kd'&&!same(S.G[k],G0[k]));
+function marks(){const cd=chD(S.i),cg=chG();
+ $$('.f[data-k]').forEach(el=>{const s=el.dataset.s,k=el.dataset.k;el.classList.toggle('ch',s=='d'?cd.includes(k):cg.includes(k))});
+ const n=cd.length+cg.length,b=$('#bChg');b.hidden=!n;b.innerHTML=n?`<span class="dot"></span>Изменено ${n} ${pl(n,'параметр','параметра','параметров')} <button class="ln" id="rsAll">сбросить всё</button>`:'';
+ const sm=$('#psum');if(sm)sm.innerHTML=n?`<span style="color:var(--chg)">● изменено ${n}</span>`:'<span class="mu">исходные данные</span>';
+ $$('#deals .dc').forEach((el,i)=>{el.querySelector('.dot').hidden=!chD(i).length})}
+const pl=(n,a,b,c)=>{const m=n%10,h=n%100;return m==1&&h!=11?a:m>=2&&m<=4&&(h<12||h>14)?b:c};
+
+/* ---------- проверка ввода ---------- */
+function val(d,g){const e=[],c=(ok,k,m)=>ok||e.push({k,m});
+ for(const k of ['V','T','cv','fee','pd','rw','lim','di','dr','sr'])c(Number.isFinite(d[k]),k,LBL[k]+': введите число');
+ for(const k of ['fa','bs','ps','eco','lgd','rwr','cr','tax','sec','irrT','roeT','step','k1','k2','k3','k4'])c(Number.isFinite(g[k]),k,LBL[k]+': введите число');
+ if(e.length)return e;
+ c(d.V>0,'V','объём выпуска должен быть больше 0');c(Number.isInteger(d.T)&&d.T>=1&&d.T<=600,'T','срок — целое число месяцев от 1 до 600');
+ [['fee','комиссия'],['pd','PD'],['rw','риск-вес']].forEach(([k,n])=>c(d[k]>=0&&d[k]<=100,k,n+' — от 0 до 100%'));
+ [['lim','лимит'],['di','спрос институционалов'],['dr','спрос частных']].forEach(([k,n])=>c(d[k]>=0,k,n+' не может быть отрицательным'));
+ c(d.sr>0,'sr','темп продаж с баланса должен быть больше 0');
+ c(/^\d{4}-\d{2}$/.test(g.ym),'ym','укажите дату размещения');c(g.step>=.01,'step','шаг подбора — не меньше 0,01 млрд');
+ const mq=Math.min(d.lim,d.V);c(mq/g.step<=400,'step','слишком мелкий шаг для такого лимита: увеличьте шаг (не больше 400 шагов)');
+ c(g.tax>=0&&g.tax<100,'tax','налог — от 0 до 100%');c(g.cr>0&&g.cr<=100,'cr','норматив капитала — от 0 до 100%');
+ c(g.bs>=0&&g.bs<=100,'bs','доля комиссии — от 0 до 100%');c(g.ps>=0&&g.ps<=100,'ps','доля для институционалов — от 0 до 100%');
+ return e}
+
+/* ---------- форма параметров ---------- */
+function fld(s,f,v){const [k,l,u,h,t,opts]=f;
+ if(u=='cb')return `<div class="f cb w2" data-s="${s}" data-k="${k}"><label><input type="checkbox" data-s="${s}" data-k="${k}" ${v?'checked':''}> <span>${l}</span><span class="dot"></span><button class="rs" data-rs="${s}:${k}" title="Вернуть исходное">↺</button></label></div>`;
+ const lab=t?tp(t,l):l,o=SEL[k];
+ const ctl=o?`<select data-s="${s}" data-k="${k}">${o.map(([a,b])=>`<option value="${a}" ${v==a?'selected':''}>${b}</option>`).join('')}</select>`
+  :`<input data-s="${s}" data-k="${k}" value="${v}" ${k=='ym'?'type="month"':'type="number" step="any" inputmode="decimal"'} aria-label="${esc(l)}">`;
+ return `<div class="f${o||k=='ym'?' w2':''}" data-s="${s}" data-k="${k}"><label>${lab}<span class="dot" title="Изменено"></span><button class="rs" data-rs="${s}:${k}" title="Вернуть исходное значение" aria-label="Вернуть исходное">↺</button></label><div class="in">${ctl}${u?`<span class="u">${u}</span>`:''}</div>${h?`<small>${h}</small>`:''}</div>`}
+function form(){const d=S.D[S.i],g=S.G,open=innerWidth>900;
+ $('#params').innerHTML=`<details ${open?'open':''} id="pdt"><summary><span>Параметры · ${esc(d.n)}</span><span id="psum"></span></summary>
+ <div class="pg"><h3>Условия выпуска</h3><p class="mu" style="margin:-4px 0 8px">Меняйте любое поле — результат пересчитается сам.</p><div class="fl">${DF.map(f=>fld('d',f[0]=='cv'?[...f.slice(0,2),d.ct=='fixed'?'%':'п.п.',...f.slice(3)]:f,d[f[0]])).join('')}</div></div>
+ ${GF.map(([t,fs])=>`<div class="pg"><h3>${t}</h3><div class="fl">${fs.map(f=>fld('g',f,g[f[0]])).join('')}</div>${t=='Спорные допущения'?'<p class="mu" style="margin:6px 0 0">Как каждое допущение меняет результат — во вкладке «Проверка».</p>':''}</div>`).join('')}
+ <div class="pg"><button id="rsDeal">Сбросить эту сделку</button> <button id="rsAll2">Сбросить всё</button></div></details>`;
+ marks()}
+function deals(){$('#deals').innerHTML=S.D.map((x,i)=>{const r=S.res&&S.res[i],e=r&&r.e;
+ return `<button class="dc ${i==S.i?'on':''}" data-d="${i}" aria-pressed="${i==S.i}"><span class="dot" hidden></span><b>${esc(x.n)}</b><span>${x.rt} · ${N(x.V)} млрд ₽ · ${x.T} мес.</span><span class="st ${e?e.pass?'pos':'neg':'zer'}">${e?(e.pass?'✔ проходит':'✖ не проходит')+' · '+M(e.net):r&&r.err?'⚠ ошибка в данных':'…'}</span></button>`}).join('');marks()}
+
+/* ---------- расчёт ---------- */
+let tmr=null;const later=()=>{clearTimeout(tmr);tmr=setTimeout(recalc,300)};
+function recalc(){S.ver++;const g=S.G;
+ S.res=S.D.map((d,i)=>{const er=val(d,g);return er.length?{d,err:er}:{d,e:opt(d,g)}});
+ const cur=S.res[S.i];$$('.f.bad').forEach(x=>x.classList.remove('bad'));
+ if(cur.err){cur.err.forEach(x=>{const el=$(`.f[data-k="${x.k}"]`);el&&el.classList.add('bad')});$('#er').innerHTML=cur.err.map(x=>`<p class="er">⚠ ${esc(x.m)}</p>`).join('')}else $('#er').innerHTML='';
+ if(S.man&&!cur.err)clampMan();
+ deals();render()}
+function render(){const t=S.tab;$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));$$('section').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
+ const cur=S.res[S.i];if(cur.err&&t!='met'&&t!='chk'){$('#t-'+t).innerHTML='<p class="mu">Исправьте ошибки в параметрах — расчёт обновится автоматически.</p>';return}
+ ({res:rRes,scen:rScen,cmp:rCmp,chk:rChk,met:rMet})[t]()}
+const after=(fn)=>{const v=S.ver;setTimeout(()=>{if(v===S.ver)fn()},30)};
+
+/* ---------- «почему так» ---------- */
+function why(d,g,e){const bd=binding(d,g,e),L=[],bal=e.q+e.h;
+ if(bal<=1e-9){L.push('На баланс ничего не берём: любая позиция на балансе опускает IRR или ROE ниже порога, а продажи инвесторам капитала не требуют.')}
+ else if(bd.includes('lim'))L.push(`Больше на баланс взять нельзя: упёрлись в свободный лимит ${B(d.lim)}.`);
+ else if(bd.includes('roe')||bd.includes('irr'))L.push(`Больше на баланс не берём: следующие ${N(g.step)} млрд опустили бы ${bd.includes('roe')?'ROE ниже '+N(g.roeT)+'%':'IRR ниже '+N(g.irrT)+'%'} (сейчас ROE ${P(e.roe)}, IRR ${iv(e)}).`);
+ else if(bd.includes('V'))L.push('Выпуск распределён целиком: больше брать нечего.');
+ else{/* ни одно ограничение не упирается: пробуем шаг вперёд по каждому балансовому каналу */
+  const nx=(dq,dh)=>opt(d,g,{fix:{q:e.q+dq,h:e.h+dh}}),xq=nx(g.step,0),xh=nx(0,g.step),rs=x=>!x.ok?(!x.ro?'ROE опустился бы ниже порога':'IRR опустился бы ниже порога'):x.net<e.net?'прибыль снизилась бы на '+M(e.net-x.net):'';
+  L.push(`Больше на баланс не берём, хотя лимит и пороги позволяют: ещё ${N(g.step)} млрд на перепродажу — ${rs(xq)||'почти без выгоды'}; ещё ${N(g.step)} млрд до погашения — ${rs(xh)||'почти без выгоды'}.`+(g.kin=='exp'?' Купон за вычетом фондирования и стоимости капитала почти не окупает удержание: зарабатываем в основном на продажах с баланса, а каждая следующая порция ждёт продажи дольше.':''))}
+ if(e.q>0&&e.h>0)L.push(`На балансе смесь: «до погашения» (${B(e.h)}) даёт больше прибыли, «на перепродажу» (${B(e.q)}) поднимает отдачу на капитал за счёт продаж частным. Доли подобраны так, чтобы оба порога выполнялись.`);
+ else if(e.q>0)L.push(`На балансе только перепродажа: ${B(e.q)} распродаются частным по ${B(d.sr)} в месяц, капитал быстро освобождается.`);
+ else if(e.h>0)L.push(`На балансе только «до погашения»: у этой сделки купон и риск-вес позволяют пройти пороги и без перепродажи.`);
+ const sold=[];if(bd.includes('di'))sold.push('институционалам '+B(e.a));if(bd.includes('dr'))sold.push('частным '+B(e.b));
+ if(sold.length)L.push(`Инвесторам продаём весь спрос: ${sold.join(', ')}.`+(e.un>1e-9?` Остаток ${B(e.un)} не распределяем — банк не обязан выкупать весь выпуск.`:''));
+ else if(chanUnit(d,g).a<=0&&d.di>0)L.push('Институционалам не продаём: при текущей трактовке комиссии этот канал убыточен.');
+ return L.slice(0,3)}
+
+/* ---------- вкладка «Результат» ---------- */
+const chip=(o,t)=>`<span class="ch2 ${o==null?'na2':o?'ok2':'no2'}">${o==null?'—':o?'✔':'✖'} ${t}</span>`;
+const SEG=[['a','Институционалы (размещение)','--c1'],['b','Частные (размещение)','--c2'],['q','Баланс: на перепродажу','--c3'],['h','Баланс: до погашения','--c4'],['un','Не распределено','--c5']];
+function verdict(d,g,e){return `${esc(d.n.split(' · ')[1])}: сделка ${e.pass?'проходит':'не проходит'}. Продаём ${B(e.a+e.b)} инвесторам, берём ${B(e.q+e.h)} на баланс. Прибыль ${M(e.net)}, ROE ${P(e.roe)}.`}
+function rRes(){const g=S.G,{d,e}=S.res[S.i],cap0=e.cap0>1e-12;
+ const io=cap0?e.irr*100>=g.irrT:null,ro=e.roe==null?null:e.roe*100>=g.roeT;
+ const bp=cap0?(()=>{const x=ev(d,g,0,0,e.q,e.h,unit(d,g,true,e.q),unit(d,g,false,1));x.irr=irr(x.f);return x})():null;
+ const kinL=g.kin=='inc'?'Доход на капитал (экономия фондирования)':g.kin=='exp'?'Стоимость капитала (расход)':null;
+ const L=e.L,pl=[['Комиссия с институционалов (доля банка)',L.com],['Отдаём институционалам',L.pay],['Комиссия с частных на размещении',L.rcm],['Экосистемный доход (частные, размещение)',L.eco],['Комиссия с объёма на баланс',L.fbal],['Купонный доход',L.cpn],['Фондирование',L.fnd],['Ожидаемые потери',L.el],['Доход с продаж с баланса',L.sec],[kinL,L.kin]].filter(r=>r[0]&&(Math.abs(r[1])>1e-12||['Купонный доход','Фондирование'].includes(r[0])));
+ $('#t-res').innerHTML=`
+ <div class="vd ${e.pass?'ok':'no'}" id="verdict"><div class="h">${e.pass?'✔':'✖'} ${verdict(d,g,e)}</div>
+ <div class="why">Почему так</div><ul>${why(d,g,e).map(x=>`<li>${x}</li>`).join('')}</ul>
+ <div class="row" style="margin-bottom:0"><button id="cpSum">Скопировать резюме для комитета</button><span class="mu">10 строк: вердикт, распределение, метрики, допущения</span></div></div>
+ <h2>Распределение выпуска ${B(d.V)}</h2>
+ <div class="bar" role="img" aria-label="Распределение выпуска по каналам">${SEG.map(([k,,c])=>`<div style="width:${Math.max(0,e[k])/d.V*100}%;background:var(${c})" title="${B(e[k])}"></div>`).join('')}</div>
+ <div class="lg">${SEG.map(([k,l,c])=>`<span><i class="sw" style="background:var(${c})"></i>${l}: <b style="color:var(--fg)">${B(e[k])}</b> (${N(e[k]/d.V*100,1)}%)</span>`).join('')}</div>
+ <div class="kp">
+  <div class="c"><span class="mu">${tp('Прибыль после налога')}</span><b>${M(e.net)}</b><span class="mu">за ${d.T} мес.</span></div>
+  <div class="c"><span class="mu">${tp('IRR','IRR на капитал')}</span><b>${iv(e)}</b>${chip(io,cap0?'порог '+N(g.irrT)+'%':'капитал не нужен')}${bp?`<div class="mu" style="margin-top:4px">балансовая часть отдельно: IRR ${iv(bp)}, ROE ${P(bp.roe)}</div>`:''}</div>
+  <div class="c"><span class="mu">${tp('ROE','ROE годовой')}</span><b>${P(e.roe)}</b>${chip(ro,e.roe==null?'капитал не нужен':'порог '+N(g.roeT)+'%')}</div>
+  <div class="c"><span class="mu">${tp('Капитал','Капитал на старте')}</span><b>${M(e.cap0)}</b><span class="mu">средний ${M(e.avg)}</span></div></div>
+ ${e.pass?'':`<p class="er">Ни одно распределение не проходит оба порога — показан вариант с наибольшей прибылью.</p>`}
+ <div class="g2"><div class="c" id="shadow"><h3>Цена ограничений</h3><p class="mu" style="margin:0 0 6px">Насколько выросла бы прибыль, если ослабить одно ограничение (с переподбором распределения)</p><p class="ld">Считаю…</p></div>
+ <div class="c" id="needs"><h3>Что нужно, чтобы взять больше на баланс</h3><p class="ld">Считаю…</p></div></div>
+ <details class="dt" id="dMan" ${S.man?'open':''}><summary>Ручной режим: свои объёмы по каналам</summary><div class="c" id="man"></div></details>
+ <details class="dt" id="dHm"><summary>Карта решений: как работает подбор</summary><div class="c" id="hm"></div></details>
+ <details class="dt"><summary>Доходы и расходы (P&amp;L)</summary><div class="c"><div class="w"><table class="t"><thead><tr><th>Статья</th><th>Сумма за срок</th></tr></thead><tbody>
+ ${pl.map(r=>`<tr><td>${r[0]}</td><td class="${r[1]>0?'pos':r[1]<0?'neg':''}">${Ms(r[1])}</td></tr>`).join('')}
+ <tr class="s"><td>Прибыль до налога</td><td>${Ms(e.pre)}</td></tr><tr><td>Налог ${N(g.tax)}%</td><td class="neg">${Ms(-e.tax)}</td></tr><tr class="s"><td>Прибыль после налога</td><td>${Ms(e.net)}</td></tr></tbody></table></div>
+ <p class="mu">Номинал, возвращённый при погашении или продаже, не прибыль: он гасит заём на фондирование. Проверено вариантов распределения: ${N(e.n,0)}.</p></div></details>
+ <details class="dt" id="dFl"><summary>Помесячные потоки</summary><div class="c" id="flows"></div></details>`;
+ if(S.man)rMan();
+ after(()=>{rShadow(d,g,e);after(()=>rNeeds(d,g,e))})}
+function rShadow(d,g,e){const el=$('#shadow');if(!el)return;const s=shadow(d,g,e).sort((a,b)=>b.dn-a.dn);
+ el.innerHTML=`<h3>Цена ограничений</h3><p class="mu" style="margin:0 0 6px">Насколько изменилась бы прибыль, если ослабить одно ограничение (распределение подбирается заново)</p>`+
+ s.map(x=>`<div class="sp"><span>${x.l}</span><b class="${x.dn>5e-5?'pos':x.dn<-5e-5?'neg':'zer'}">${Math.abs(x.dn)<5e-5?'не мешает':Ms(x.dn)}</b></div>`).join('')+
+ (s[0].dn>5e-5?`<p class="mu" style="margin:8px 0 0">Сильнее всего сделку сдерживает: <b>${s[0].s}</b>.</p>`:'')}
+function rNeeds(d,g,e){const el=$('#needs');if(!el)return;const tg=needTarget(d),bal=e.q+e.h;
+ let h=`<h3>Что нужно, чтобы взять больше на баланс</h3>`;
+ if(tg<=1e-9){el.innerHTML=h+'<p class="mu">Спрос инвесторов покрывает весь выпуск — брать на баланс нечего.</p>';return}
+ if(bal>=tg-1e-9){el.innerHTML=h+`<p>Банк уже берёт на баланс всё, что можно: ${B(bal)} (остаток выпуска после продаж в пределах лимита ${B(d.lim)}).</p>`;return}
+ const n=needs(d,g);
+ el.innerHTML=h+`<p class="mu" style="margin:0 0 6px">Сейчас на баланс идёт ${B(bal)}. Чтобы взять ${B(tg)} (весь остаток выпуска в пределах лимита) и пройти оба порога, достаточно одного из условий:</p>`+
+ n.map(x=>`<div class="sp"><span>${x.l}</span><b>${x.r?(x.r.edge?'уже выполнено':N(x.r.v,x.k=='sr'?2:x.k=='rw'?1:2)+' '+x.u):'не находится в разумном диапазоне'}</b></div><div class="mu" style="text-align:right;margin-top:-2px">сейчас ${N(x.cur)} ${x.u}</div>`).join('')+
+ `<p class="mu" style="margin:8px 0 0">Подбор делением пополам, до 20 итераций. Остальные параметры как сейчас.</p>`}
+
+/* помесячные потоки (по раскрытию) */
+document.addEventListener('toggle',ev=>{const t=ev.target;if(!t.open)return;
+ if(t.id=='dFl')rFlows();if(t.id=='dHm')rHeat();if(t.id=='dMan'&&!S.man){startMan()}},true);
+function flowRows(d,g,e){const x=detail(d,g,e);return{x,H:['Месяц','КС, %','Позиция, млрд ₽','Продано, млрд ₽','Купон, млн ₽','Фондирование, млн ₽','Потери, млн ₽','Доход с продаж, млн ₽','Доход на капитал, млн ₽','Капитал, млн ₽','Поток на капитал, млн ₽'],
+ R:[['0 (размещение)','','','','','','','','',x.cap0*1e3,x.flow0*1e3],...x.rows.map(r=>[r.mon,r.kc,r.pos,r.sold,r.cpn*1e3,r.fnd*1e3,r.el*1e3,r.sec*1e3,r.kin*1e3,r.cap*1e3,r.flow*1e3])]}}
+function rFlows(){const el=$('#flows');if(!el)return;const{d,e}=S.res[S.i],g=S.G,{x,H,R}=flowRows(d,g,e);
+ el.innerHTML=`<div class="row" style="margin-top:0"><button data-cp="flows">Скопировать таблицу</button><button data-dl="flows">Скачать CSV</button><span class="mu">Поток месяца 0: −капитал + комиссии после налога. Дальше: прибыль после налога + высвобождение капитала.</span></div>
+ <div class="w" style="max-height:420px;overflow:auto"><table class="t"><thead><tr>${H.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${R.map(r=>`<tr>${r.map((v,j)=>`<td>${typeof v=='number'?N(v,j>=4?2:j==1?2:3):v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+
+/* ---------- ручной режим ---------- */
+function startMan(){const{e}=S.res[S.i];S.man={a:e.a,b:e.b,q:e.q,h:e.h};rMan()}
+function clampMan(){const d=S.D[S.i],m=S.man;m.a=Math.min(Math.max(0,m.a),d.di);m.b=Math.min(Math.max(0,m.b),d.dr);m.q=Math.max(0,Math.min(m.q,d.lim,d.V));m.h=Math.max(0,Math.min(m.h,d.lim-m.q,d.V));
+ const over=m.a+m.b+m.q+m.h-d.V;if(over>1e-9){m.a=Math.max(0,m.a-over)}}
+function manEval(){const d=S.D[S.i],g=S.G,m=S.man,x=ev(d,g,m.a,m.b,m.q,m.h,unit(d,g,true,m.q),unit(d,g,false,1));x.irr=irr(x.f);Object.assign(x,thr(x,g));x.pass=x.ok;return x}
+function rMan(){const el=$('#man');if(!el||!S.man)return;const d=S.D[S.i],g=S.G,m=S.man;
+ const mx={a:d.di,b:d.dr,q:Math.min(d.lim,d.V),h:Math.min(d.lim,d.V)};
+ const sl=(k,l)=>`<span>${l}</span><input type="range" min="0" max="${mx[k]}" step="${g.step}" value="${m[k]}" data-man="${k}" aria-label="${l}"><input type="number" min="0" max="${mx[k]}" step="${g.step}" value="${+m[k].toFixed(4)}" data-man="${k}" aria-label="${l}, млрд ₽">`;
+ el.innerHTML=`<p class="mu" style="margin-top:0">Двигайте объёмы — пересчёт сразу. Ограничения соблюдаются автоматически: каналы ≤ спроса, баланс ≤ лимита ${B(d.lim)}, сумма ≤ выпуска ${B(d.V)}.</p>
+ <div class="sl">${sl('a','Институционалы')}${sl('b','Частные')}${sl('q','Баланс: перепродажа')}${sl('h','Баланс: до погашения')}</div><div id="manT"></div>
+ <div class="row"><button id="manRec">Вернуть рекомендацию</button><button id="manOff">Выключить ручной режим</button></div>`;rManT()}
+function rManT(){const el=$('#manT');if(!el)return;const e=S.res[S.i].e,x=manEval();
+ const dl=(a,b)=>{const v=a-b;return Math.abs(v)<5e-8?'= оптимуму':Ms(v)+' к оптимуму'};
+ el.innerHTML=`<div class="w" style="margin-top:10px"><table class="t"><thead><tr><th></th><th>Ваш вариант</th><th>Рекомендация</th><th>Разница</th></tr></thead><tbody>
+ <tr><td>Не распределено</td><td>${B(x.un)}</td><td>${B(e.un)}</td><td></td></tr>
+ <tr><td>Прибыль после налога</td><td>${M(x.net)}</td><td>${M(e.net)}</td><td class="${x.net<e.net-5e-8?'neg':'pos'}"><b>${dl(x.net,e.net)}</b></td></tr>
+ <tr><td>IRR</td><td>${iv(x)}</td><td>${iv(e)}</td><td></td></tr><tr><td>ROE</td><td>${P(x.roe)}</td><td>${P(e.roe)}</td><td></td></tr>
+ <tr><td>Капитал на старте</td><td>${M(x.cap0)}</td><td>${M(e.cap0)}</td><td></td></tr>
+ <tr><td>Пороги</td><td>${chip(x.pass,x.pass?'пройдены':[x.io?'':'IRR',x.ro?'':'ROE'].filter(Boolean).join(' и ')+' ниже порога')}</td><td>${chip(e.pass,e.pass?'пройдены':'не пройдены')}</td><td></td></tr></tbody></table></div>
+ ${x.pass&&x.net>e.net+5e-8?'<p class="nt">Ваш вариант прибыльнее рекомендации — скорее всего, из-за шага подбора: уменьшите шаг в параметрах.</p>':''}`}
+document.addEventListener('input',ev=>{const t=ev.target;if(t.dataset.man==null)return;const k=t.dataset.man,v=parseFloat(t.value);if(!Number.isFinite(v))return;S.man[k]=v;clampMan();
+ $$('#man [data-man]').forEach(el=>{if(el!==t)el.value=+S.man[el.dataset.man].toFixed(4)});if(Math.abs(S.man[k]-v)>1e-9&&t.type=='range')t.value=S.man[k];rManT()});
+
+/* ---------- карта решений ---------- */
+function rHeat(){const el=$('#hm');if(!el)return;el.innerHTML='<p class="ld">Считаю все варианты…</p>';
+ after(()=>{const{d,e}=S.res[S.i],g=S.G,b=opt(d,g,{grid:true}),gr=b.grid,mq=Math.min(d.lim,d.V),n=Math.floor(mq/g.step+1e-9)+1;
+  const ok=gr.filter(x=>x.ok),mn=Math.min(...ok.map(x=>x.net)),mxv=Math.max(...ok.map(x=>x.net));
+  el.innerHTML=`<p class="mu" style="margin-top:0">Каждая клетка — один вариант: по горизонтали объём «на перепродажу», по вертикали «до погашения» (институционалы и частные добираются до спроса). Цвет — прибыль после налога, серым — варианты, не проходящие пороги. Кружок — выбранный вариант. Нажмите на клетку, чтобы открыть её в ручном режиме.</p>
+  <div class="mu" style="font-size:12px">↑ до погашения, 0–${B(mq)} · → на перепродажу, 0–${B(mq)}</div><canvas class="hm" id="hmc" width="${n*Math.max(2,Math.floor(480/n))}" height="${n*Math.max(2,Math.floor(480/n))}" aria-label="Карта решений"></canvas>
+  <div class="lg" style="margin-top:6px"><span><i class="sw" style="background:#c9e6ee"></i>меньше прибыль</span><span><i class="sw" style="background:#0f5c6e"></i>больше прибыль (${M(mxv)})</span><span><i class="sw" style="background:var(--c5)"></i>не проходит пороги</span></div><p class="mu" id="hmi">Наведите на клетку.</p>`;
+  const cv=$('#hmc'),cx=cv.getContext('2d'),cs=cv.width/n,css=getComputedStyle(document.documentElement),grey=css.getPropertyValue('--c5').trim()||'#b3bcc6';
+  const lerp=(a,b,t)=>Math.round(a+(b-a)*t),col=t=>`rgb(${lerp(201,15,t)},${lerp(230,92,t)},${lerp(238,110,t)})`;
+  cx.clearRect(0,0,cv.width,cv.height);const idx={};
+  for(const x of gr){const i=Math.round(x.q/g.step),j=Math.round(x.h/g.step);idx[i+','+j]=x;cx.fillStyle=x.ok?col(mxv>mn?(x.net-mn)/(mxv-mn):1):grey;cx.fillRect(i*cs,cv.height-(j+1)*cs,cs,cs)}
+  const bi=Math.round(e.q/g.step),bj=Math.round(e.h/g.step);cx.strokeStyle='#e8590c';cx.lineWidth=Math.max(2,cs/3);cx.beginPath();cx.arc((bi+.5)*cs,cv.height-(bj+.5)*cs,Math.max(5,cs*1.2),0,7);cx.stroke();
+  const at=ev2=>{const r=cv.getBoundingClientRect(),i=Math.floor((ev2.clientX-r.left)/r.width*n),j=Math.floor((r.bottom-ev2.clientY)/r.height*n);return idx[i+','+j]};
+  cv.onmousemove=ev2=>{const x=at(ev2);$('#hmi').innerHTML=x?`Перепродажа ${B(x.q)}, до погашения ${B(x.h)} → прибыль ${M(x.net)}, ROE ${P(x.roe)}, IRR ${iv(x)} · ${x.ok?'<span class="pos">проходит</span>':'<span class="neg">не проходит</span>'}`:'Вне лимита'};
+  cv.onclick=ev2=>{const x=at(ev2);if(!x)return;S.man={a:x.a,b:x.b,q:x.q,h:x.h};$('#dMan').open=true;rMan();$('#dMan').scrollIntoView({behavior:'smooth',block:'start'})}})}
+
+/* ---------- сценарии ---------- */
+function scenSet(){const d=S.D[S.i],X=S.X/100;
+ if(S.scM=='vol')return[['Спрос = выпуск −'+S.X+'%',scenDemand(d,-X,'vol')],['Спрос = выпуску',scenDemand(d,0,'vol')],['Спрос = выпуск +'+S.X+'%',scenDemand(d,X,'vol')],['Базовый спрос',d]];
+ return[['Спрос −'+S.X+'%',scenDemand(d,-X,'mul',S.sI,S.sR)],['Базовый',d],['Спрос +'+S.X+'%',scenDemand(d,X,'mul',S.sI,S.sR)]]}
+const SR=[['Спрос институционалов',x=>B(x.d.di)],['Спрос частных',x=>B(x.d.dr)],['Институционалы',x=>B(x.e.a)],['Частные (размещение)',x=>B(x.e.b)],['Баланс: перепродажа',x=>B(x.e.q)],['Баланс: до погашения',x=>B(x.e.h)],['Не распределено',x=>B(x.e.un)],['Прибыль после налога',x=>M(x.e.net)],['IRR',x=>iv(x.e)],['ROE',x=>P(x.e.roe)],['Капитал на старте',x=>M(x.e.cap0)],['Пороги',x=>chip(x.e.pass,x.e.pass?'пройдены':'не пройдены')]];
+function rScen(){const d=S.D[S.i],g=S.G;
+ $('#t-scen').innerHTML=`<h2 style="margin-top:4px">Что будет, если спрос изменится</h2>
+ <div class="row"><label class="f" style="width:150px"><span class="mu">Изменение, X %</span><input id="scX" type="number" min="0" max="100" step="any" value="${S.X}"></label>
+ <label class="f" style="flex:1;min-width:240px"><span class="mu">Как менять спрос</span><select id="scM"><option value="mul" ${S.scM=='mul'?'selected':''}>текущий спрос × (1 ± X%)</option><option value="vol" ${S.scM=='vol'?'selected':''}>суммарный спрос = объём выпуска ± X%</option></select></label></div>
+ ${S.scM=='mul'?`<div class="row"><label><input type="checkbox" id="scI" ${S.sI?'checked':''}> менять спрос институционалов</label><label><input type="checkbox" id="scR" ${S.sR?'checked':''}> менять спрос частных</label></div>`:`<p class="mu">Суммарный спрос задаётся от объёма выпуска ${B(d.V)}; он делится между институционалами и частными в тех же долях, что в исходных данных.</p>`}
+ <div id="scT"><p class="ld">Считаю…</p></div>
+ <h2>Сценарии ключевой ставки</h2><p class="mu">Вся траектория КС сдвигается на ±1 п.п. Купон плавающий двигается вместе с фондированием, у фиксированного купона маржа меняется.</p><div id="scK"><p class="ld">Считаю…</p></div>
+ <h2>Матрица «спрос × КС»</h2><p class="mu">Распределение подбирается заново в каждой клетке. Показаны: статус порогов, объём на баланс и прибыль.</p><div id="scMx"><p class="ld">Считаю…</p></div>
+ <h2>Что сильнее всего двигает результат</h2><div class="row"><select id="trnM"><option value="roe" ${S.trn=='roe'?'selected':''}>ROE текущего распределения</option><option value="net" ${S.trn=='net'?'selected':''}>прибыль с переподбором распределения</option></select><span class="mu">каждый параметр отдельно ±10%</span></div><div id="trn"><p class="ld">Считаю…</p></div>`;
+ after(()=>{const sc=scenSet().map(([n,dd])=>({n,d:dd,e:opt(dd,g)}));
+  $('#scT').innerHTML=`<div class="w"><table class="t"><thead><tr><th>${esc(d.n)}</th>${sc.map(s=>`<th>${s.n}</th>`).join('')}</tr></thead><tbody>${SR.map(([l,f])=>`<tr><td>${l}</td>${sc.map(s=>`<td>${f(s)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="mu">Темп перепродажи и лимит в сценариях не меняются (допущение Д7).</p>`;
+  after(()=>{const ks=[['КС −1 п.п.',-1],['Базовая КС',0],['КС +1 п.п.',1]].map(([n,k])=>({n,d,e:opt(d,{...g,kd:k})}));
+   $('#scK').innerHTML=`<div class="w"><table class="t"><thead><tr><th></th>${ks.map(s=>`<th>${s.n}</th>`).join('')}</tr></thead><tbody>${SR.slice(2).map(([l,f])=>`<tr><td>${l}</td>${ks.map(s=>`<td>${f(s)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+   after(()=>{const ds=S.scM=='vol'?scenSet().slice(0,3):scenSet(),kk=[-1,0,1];
+    $('#scMx').innerHTML=`<div class="w"><table class="t mx"><thead><tr><th>Спрос \\ КС</th>${kk.map(k=>`<th>${k?((k>0?'+':'−')+'1 п.п.'):'базовая'}</th>`).join('')}</tr></thead><tbody>${ds.map(([n,dd])=>`<tr><td style="text-align:left!important"><b>${n}</b></td>${kk.map(k=>{const e=opt(dd,{...g,kd:k});return `<td>${chip(e.pass,e.pass?'проходит':'нет')}<br>баланс ${B(e.q+e.h)}<br>${M(e.net)}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>`;
+    after(rTrn)})})})}
+function rTrn(){const el=$('#trn');if(!el)return;const{d,e}=S.res[S.i],g=S.G,mode=S.trn;
+ const P5=[['КС (вся траектория)',(dd,gg,s)=>[dd,{...gg,k1:gg.k1*s,k2:gg.k2*s,k3:gg.k3*s,k4:gg.k4*s}]],[d.ct=='fixed'?'Ставка купона':'Спред к КС',(dd,gg,s)=>[{...dd,cv:dd.cv*s},gg]],['PD',(dd,gg,s)=>[{...dd,pd:dd.pd*s},gg]],['Темп продаж с баланса',(dd,gg,s)=>[{...dd,sr:dd.sr*s},gg]],['Риск-вес заёмщика',(dd,gg,s)=>[{...dd,rw:dd.rw*s},gg]],['Свободный лимит',(dd,gg,s)=>[{...dd,lim:dd.lim*s},gg]],['Спрос инвесторов',(dd,gg,s)=>[{...dd,di:dd.di*s,dr:dd.dr*s},gg]]];
+ const val0=mode=='roe'?(e.roe||0):e.net;
+ const calc=(dd,gg)=>{if(mode=='roe'){const x=ev(dd,gg,e.a,e.b,Math.min(e.q,dd.lim),Math.min(e.h,Math.max(0,dd.lim-e.q)),unit(dd,gg,true,Math.min(e.q,dd.lim)),unit(dd,gg,false,1));return x.roe||0}return opt(dd,gg).net};
+ if(mode=='roe'&&e.roe==null){el.innerHTML='<p class="mu">У текущего распределения нет капитала, ROE не определён. Переключитесь на прибыль.</p>';return}
+ const rows=P5.map(([l,f])=>{const lo=calc(...f(d,g,.9)),hi=calc(...f(d,g,1.1));return{l,lo:lo-val0,hi:hi-val0}}).sort((a,b)=>Math.max(Math.abs(b.lo),Math.abs(b.hi))-Math.max(Math.abs(a.lo),Math.abs(a.hi)));
+ const mx=Math.max(1e-12,...rows.map(r=>Math.max(Math.abs(r.lo),Math.abs(r.hi)))),fm=v=>mode=='roe'?(v>=0?'+':'−')+N(Math.abs(v)*100,2)+' п.п.':Ms(v);
+ const bar=v=>{const w=Math.abs(v)/mx*50;return `<i style="${v>=0?'left:50%':'left:'+(50-w)+'%'};width:${w}%;background:${v>=0?'var(--ok)':'var(--no)'}"></i>`};
+ el.innerHTML=`<p class="mu">База: ${mode=='roe'?'ROE '+P(e.roe):'прибыль '+M(e.net)}. У каждого параметра две полосы: верхняя — параметр уменьшили на 10%, нижняя — увеличили на 10%. Зелёная — результат растёт, красная — падает. Сверху — самые влиятельные.</p><div class="trn">${rows.map(r=>`<span>${r.l}</span><div><div class="tb" title="−10%: ${fm(r.lo)}">${bar(r.lo)}</div><div class="tb" title="+10%: ${fm(r.hi)}">${bar(r.hi)}</div><div class="mu" style="font-size:12px">−10%: ${fm(r.lo)} · +10%: ${fm(r.hi)}</div></div>`).join('')}</div>`}
+
+/* ---------- сравнение сделок ---------- */
+const CH=['Сделка','Институционалы, млрд ₽','Частные, млрд ₽','Перепродажа, млрд ₽','До погашения, млрд ₽','Не распределено, млрд ₽','Прибыль после налога, млн ₽','IRR, %','ROE, %','Капитал на старте, млн ₽','Пороги'];
+const cmpRows=()=>S.res.filter(r=>r.e).map(({d,e})=>[d.n,e.a,e.b,e.q,e.h,e.un,e.net*1e3,e.cap0>1e-12?e.irr*100:'н/п',e.roe==null?'н/п':e.roe*100,e.cap0*1e3,e.pass?'проходит':'не проходит']);
+function rCmp(){const R=cmpRows();
+ $('#t-cmp').innerHTML=`<h2 style="margin-top:4px">Четыре сделки при текущих параметрах</h2>
+ <div class="row"><button data-cp="cmp" class="p">Скопировать таблицу</button><button data-dl="cmp">Скачать CSV</button><span class="mu">Таблица вставляется в Excel или письмо как есть.</span></div>
+ <div class="w"><table class="t"><thead><tr>${CH.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${R.map((r,i)=>`<tr class="${S.res[i]&&i==S.i?'cur':''}">${r.map((v,j)=>`<td>${j==0?`<button class="ln" data-d="${S.D.findIndex(x=>x.n==v)}">${esc(v)}</button>`:j==10?chip(v=='проходит',v):typeof v=='number'?N(v,j>=7&&j<=8?2:j>=6?1:2):v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+ <p class="mu">Допущения: доход на капитал — ${SEL.kin.find(x=>x[0]==S.G.kin)[1]}; 90% институционалам — ${SEL.psb.find(x=>x[0]==S.G.psb)[1]}; IRR — ${SEL.irrB.find(x=>x[0]==S.G.irrB)[1]}. ${chG().length||S.D.some((x,i)=>chD(i).length)?'<b style="color:var(--chg)">Есть изменённые параметры.</b>':'Все параметры исходные (базовый сценарий).'}</p>`}
+
+/* ---------- проверка ---------- */
+function rChk(){const ok=CHECKS.filter(c=>c.ok).length,cur=S.res[S.i];
+ $('#t-chk').innerHTML=`<h2 style="margin-top:4px">Самопроверки: ${ok} из ${CHECKS.length} пройдено</h2>
+ <p class="mu">Контрольные примеры прогоняются при каждой загрузке страницы на исходных данных. Два последних сверяют ядро с независимой реализацией (стенд в учебном тренажёре): совпадение до третьего знака.</p>
+ <div class="c"><ul class="ckl">${CHECKS.map(c=>`<li><span class="${c.ok?'pos':'neg'}">${c.ok?'✔':'✖'}</span><span>${esc(c.n)}</span><span class="d">${esc(c.det)}</span></li>`).join('')}</ul></div>
+ <h2>Влияние спорных допущений</h2><p class="mu">Три места в условии можно прочитать по-разному. Ниже — результат по сделке при каждой комбинации трактовок; строка с текущими настройками выделена.</p><div id="asm">${cur.err?'<p class="mu">Исправьте ошибки в параметрах.</p>':'<p class="ld">Считаю 12 вариантов…</p>'}</div>`;
+ if(cur.err)return;
+ after(()=>{const{d}=cur,g=S.G,rows=[];
+  for(const psb of ['bank','all'])for(const kin of ['inc','exp','off'])for(const irrB of ['post','pre']){const gg={...g,psb,kin,irrB},e=opt(d,gg);rows.push({psb,kin,irrB,e})}
+  const lbl=(k,v)=>ASSUME.find(a=>a.k==k).v.find(x=>x[0]==v)[1];
+  const imp=ASSUME.map(a=>{const vs=a.v.map(([v])=>rows.find(r=>r[a.k]==v&&ASSUME.every(b=>b.k==a.k||r[b.k]==g[b.k])).e);const nets=vs.map(e=>e.net),bals=vs.map(e=>e.q+e.h),ps=vs.map(e=>e.pass);
+   return{a,lo:Math.min(...nets),hi:Math.max(...nets),bl:Math.min(...bals),bh:Math.max(...bals),flip:new Set(ps).size>1}}).sort((x,y)=>(y.hi-y.lo)-(x.hi-x.lo));
+  $('#asm').innerHTML=`<div class="nt">Сильнее всего на «${esc(d.n)}» влияет допущение <b>«${imp[0].a.l}»</b>: прибыль от ${M(imp[0].lo)} до ${M(imp[0].hi)}, на баланс от ${B(imp[0].bl)} до ${B(imp[0].bh)}${imp[0].flip?', и меняется статус порогов':''}. ${imp.slice(1).map(x=>`«${x.a.l}»: прибыль ${M(x.lo)}–${M(x.hi)}`).join('; ')}.</div>
+  <div class="w"><table class="t"><thead><tr><th>90% институционалам</th><th>Доход на капитал</th><th>База IRR</th><th>Баланс, млрд ₽</th><th>Не распр., млрд ₽</th><th>Прибыль, млн ₽</th><th>IRR</th><th>ROE</th><th>Пороги</th></tr></thead><tbody>
+  ${rows.map(r=>`<tr class="${r.psb==g.psb&&r.kin==g.kin&&r.irrB==g.irrB?'cur':''}"><td>${lbl('psb',r.psb)}</td><td>${lbl('kin',r.kin)}</td><td>${lbl('irrB',r.irrB)}</td><td>${N(r.e.q+r.e.h)}</td><td>${N(r.e.un)}</td><td>${N(r.e.net*1e3,1)}</td><td>${iv(r.e)}</td><td>${P(r.e.roe)}</td><td>${chip(r.e.pass,r.e.pass?'да':'нет')}</td></tr>`).join('')}</tbody></table></div>
+  <p class="mu">База IRR не меняет прибыль, но меняет, какие распределения проходят порог IRR: до налога IRR выше примерно на треть.</p>`})}
+
+/* ---------- методика ---------- */
+function rMet(){if($('#t-met').dataset.done)return;$('#t-met').dataset.done=1;
+ $('#t-met').innerHTML=`<h2 style="margin-top:4px">Как считается</h2><div class="c"><ol class="mt">
+<li><b>Время.</b> Месяц 0 — размещение (декабрь 2026). Дальше помесячно на весь срок. Ставки годовые, за месяц начисляется остаток позиции на начало месяца × ставка ÷ 12. КС по траектории: 14% до июня 2027, 13,5% во 2-м полугодии 2027, 12% в 2028, 11% дальше.</li>
+<li><b>Купон.</b> Плавающий: КС месяца + спред. Фиксированный: только ставка.</li>
+<li><b>Фондирование.</b> КС месяца + 0,2 п.п. на остаток позиции на балансе.</li>
+<li><b>Ожидаемые потери.</b> Позиция × PD × LGD ÷ 12.</li>
+<li><b>Комиссия.</b> Банк получает 50% комиссии организатора со всего объёма, который проходит через него: продажи институционалам и частным на размещении и объём, взятый на баланс (подтвердил работодатель). С объёма институционалов отдаёт им 90% своей доли — банку остаётся 5% всей комиссии. С частных — плюс экосистемный доход 1%. Трактовки переключаются.</li>
+<li><b>Перепродажа.</b> 1-й месяц держим, со 2-го продаём частным по заданному темпу, но не больше остатка. С каждой продажи 0,54% объёма. Проданное дальше не даёт купона и не требует фондирования и капитала.</li>
+<li><b>До погашения.</b> Держим весь срок; номинал в конце возвращается и гасит заём на фондирование, это не прибыль.</li>
+<li><b>Капитал.</b> Остаток позиции × риск-вес × 12%. Риск-вес 120% для перепродажи и риск-вес заёмщика для «до погашения».</li>
+<li><b>Стоимость капитала.</b> Капитал × ставка фондирования ÷ 12 в месяц, вычитается из прибыли: по ответу работодателя капитал «стоит» банку как фондирование. Переключатель позволяет посчитать эту строку как доход или не учитывать.</li>
+<li><b>Налог.</b> 25% с суммарной положительной прибыли сделки; убыток налог не уменьшает.</li>
+<li><b>ROE.</b> Прибыль после налога за срок × 12 ÷ сумма помесячного капитала (то есть годовая прибыль на средний капитал).</li>
+<li><b>База IRR (выбрано нами, работодатель оставил на наше усмотрение).</b> IRR считается по всей сделке на капитал банка, после налога, по помесячным потокам. Месяц 0: −капитал + комиссии за размещение. Дальше: прибыль месяца после налога + высвобождаемый капитал. Годовой IRR = (1 + месячный)^12 − 1; налог распределяется по месяцам пропорционально прибыли. Почему так: (1) банк решает про сделку целиком, комиссии за размещение и позиция на балансе приходят вместе; (2) порог 30% имеет смысл только для отдачи на капитал, IRR на всю позицию был бы около купона, ~15%; (3) после налога, чтобы IRR и ROE были на одной базе и сравнивались с порогами одинаково. Если капитал не нужен, IRR не определён и порог считается пройденным. Для прозрачности рядом показан IRR балансовой части отдельно: сама по себе она обычно ниже порога, сделку вытягивают комиссии размещения.</li>
+<li><b>Подбор.</b> Перебор объёмов «на перепродажу» и «до погашения» с шагом 0,1 млрд в пределах лимита; институционалы и частные добираются до спроса в порядке убывания дохода на единицу (убыточный канал не используется). Выбирается вариант с максимальной прибылью после налога среди проходящих оба порога, при равенстве — с меньшим капиталом. Пороги сравниваются без округления.</li>
+<li><b>Цена ограничений.</b> Подбор повторяется с одним ослабленным ограничением (+1 млрд лимита, +10% спроса, +10% темпа, порог −1 п.п.); разница прибыли — цена ограничения.</li>
+<li><b>Что нужно.</b> Делением пополам (до 20 итераций) ищется минимальный спред, минимальный темп продаж или максимальный риск-вес, при которых банк может взять на баланс весь остаток выпуска в пределах лимита и пройти оба порога.</li></ol></div>
+<h2>Допущения</h2><div class="c"><ol class="mt">
+<li>Д1. Комиссия 50% начисляется и на объём, взятый на баланс; институционалам отдаётся 90% от доли банка. Подтверждено работодателем.</li>
+<li>Д2. PD переводится в месяц линейно.</li><li>Д3. Купон, фондирование и потери — помесячно от остатка на начало месяца.</li>
+<li>Д4. Продажа с баланса по номиналу, без изменения цены облигации.</li><li>Д5. Налог со всей прибыли сделки; убыток налог не уменьшает.</li>
+<li>Д6. Нераспределённый остаток допустим и ничего не стоит банку (банк не организатор).</li>
+<li>Д7. Сценарии меняют спрос обоих сегментов одинаково; темп перепродажи и лимит не меняются.</li>
+<li>Д8. Цель подбора — максимум прибыли после налога при выполнении обоих порогов; при равенстве — меньше капитала.</li>
+<li>Д9. ROE на средний капитал, приведён к году.</li>
+<li>Д10. «Капитал × фондирование» — расход (стоимость капитала). Подтверждено работодателем.</li>
+<li>Д11. IRR считается по всей сделке по потокам на капитал после налога (выбор оставлен нам, обоснование — в пункте «IRR» выше).</li></ol></div>
+<h2>Словарь терминов</h2><div class="c"><dl>${Object.entries(TIP).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>
+<p class="mu">Модель v${MODEL_VERSION}. Учебные данные, не инвестиционная рекомендация.</p>`}
+
+/* ---------- копирование и CSV ---------- */
+const fmtX=v=>typeof v=='number'?String(+v.toFixed(6)).replace('.',','):String(v);
+function table(id){if(id=='cmp')return{H:CH,R:cmpRows(),f:'сделки_базовый_сценарий.csv'};const{d,e}=S.res[S.i],x=flowRows(d,S.G,e);return{H:x.H,R:x.R,f:'потоки_'+d.n.split(' · ')[1]+'.csv'}}
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1800)}
+async function copy(txt){try{await navigator.clipboard.writeText(txt);toast('Скопировано')}catch(e){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Скопировано')}catch(_){toast('Не удалось скопировать')}ta.remove()}}
+function download(name,txt){const b=new Blob(['﻿'+txt],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function summary(){const{d,e}=S.res[S.i],g=S.G,bd=binding(d,g,e),cd=chD(S.i),cg=chG();
+ const lim={di:'спрос институционалов',dr:'спрос частных',lim:'лимит на заёмщика',V:'объём выпуска',roe:'порог ROE',irr:'порог IRR'};
+ return [`Сделка: ${d.n} (${d.rt}), выпуск ${B(d.V)}, ${d.T} мес., купон ${d.ct=='fixed'?'фикс '+N(d.cv)+'%':'КС + '+N(d.cv)+' п.п.'}.`,
+ `Вердикт: ${e.pass?'проходит':'не проходит'} пороги банка (IRR ≥ ${N(g.irrT)}%, ROE ≥ ${N(g.roeT)}%).`,
+ `Распределение: институционалы ${B(e.a)}, частные ${B(e.b)}, баланс на перепродажу ${B(e.q)}, до погашения ${B(e.h)}, не распределено ${B(e.un)}.`,
+ `Прибыль после налога: ${M(e.net)} за срок.`,
+ `IRR на капитал: ${iv(e)}; ROE годовой: ${P(e.roe)}.`,
+ `Капитал: на старте ${M(e.cap0)}, средний ${M(e.avg)}.`,
+ `Что ограничивает: ${bd.map(k=>lim[k]).join(', ')||'ничего не упирается'}.`,
+ `Допущения: 90% институционалам — ${SEL.psb.find(x=>x[0]==g.psb)[1]}; доход на капитал — ${SEL.kin.find(x=>x[0]==g.kin)[1]}; IRR — ${SEL.irrB.find(x=>x[0]==g.irrB)[1]}; КС ${N(g.k1)}/${N(g.k2)}/${N(g.k3)}/${N(g.k4)}%.`,
+ `Изменённые параметры: ${cd.length+cg.length?[...cd,...cg].map(k=>LBL[k]+' = '+(SEL[k]?SEL[k].find(x=>x[0]==(cd.includes(k)?d[k]:g[k]))[1]:fmtX(cd.includes(k)?d[k]:g[k]))).join('; '):'нет, исходные данные'}.`,
+ `Модель v${MODEL_VERSION}, расчёт ${new Date().toLocaleDateString('ru-RU')}, самопроверки ${CHECKS.filter(c=>c.ok).length}/${CHECKS.length}. Учебные данные.`].join('\n')}
+
+/* ---------- состояние для ассистента ---------- */
+window.calcState=function(){const r=S.res&&S.res[S.i];if(!r||!r.e)return{error:'в параметрах ошибка'};const{d,e}=r,g=S.G,rd=v=>v==null||!isFinite(v)?v:Math.round(v*1e4)/1e4;
+ return{model:MODEL_VERSION,deal:{...d},params:{...g},changed:[...chD(S.i),...chG()],
+  allocation_bn:{institutional:e.a,retail:e.b,balance_resale:e.q,balance_hold:e.h,unallocated:e.un},
+  metrics:{profit_after_tax_mln:rd(e.net*1e3),profit_before_tax_mln:rd(e.pre*1e3),tax_mln:rd(e.tax*1e3),irr_pct:e.cap0>1e-12?rd(e.irr*100):'н/п',roe_pct:e.roe==null?'н/п':rd(e.roe*100),capital_start_mln:rd(e.cap0*1e3),capital_avg_mln:rd(e.avg*1e3)},
+  pnl_mln:Object.fromEntries(Object.entries(e.L).map(([k,v])=>[k,rd(v*1e3)])),
+  balance_part_only:(()=>{if(e.cap0<=1e-12)return null;const x=ev(d,g,0,0,e.q,e.h,unit(d,g,true,e.q),unit(d,g,false,1));return{irr_pct:rd(irr(x.f)*100),roe_pct:rd(x.roe*100),profit_mln:rd(x.net*1e3)}})(),thresholds:{irr_pct:g.irrT,roe_pct:g.roeT,irr_ok:e.io,roe_ok:e.ro,pass:e.pass},binding:binding(d,g,e),why:why(d,g,e).map(s=>s.replace(/<[^>]+>/g,'')),
+  all_deals:S.res.filter(x=>x.e).map(({d,e})=>({deal:d.n,profit_mln:rd(e.net*1e3),irr_pct:e.cap0>1e-12?rd(e.irr*100):'н/п',roe_pct:e.roe==null?'н/п':rd(e.roe*100),balance_bn:e.q+e.h,pass:e.pass}))}};
+
+/* ---------- подсказки первого запуска ---------- */
+const TOUR=[['#deals','1 из 3 · Выберите сделку','Четыре сделки из условия. Параметры любой можно поменять в блоке «Параметры» — результат пересчитается сам.'],['#verdict','2 из 3 · Посмотрите вердикт','Сверху — ответ одной строкой и почему он такой. Ниже — распределение, прибыль, IRR, ROE и цена ограничений.'],['nav [data-t=scen]','3 из 3 · Покрутите сценарии','Что будет, если спрос или ключевая ставка изменятся. Там же — какие параметры сильнее всего двигают результат.']];
+let tourI=-1;
+function tour(i){$$('.hl').forEach(x=>x.classList.remove('hl'));const el=$('#tour');if(i<0||i>=TOUR.length){el.style.display='none';tourI=-1;LS.set('bondTourDone','1');return}
+ tourI=i;if(S.tab!='res'){S.tab='res';render()}const[sel,h,t]=TOUR[i],tg=$(sel);if(!tg){tour(-1);return}tg.classList.add('hl');tg.scrollIntoView({block:'center',behavior:'smooth'});
+ el.innerHTML=`<div class="n">${h}</div><p>${t}</p><div class="row" style="margin:0"><button class="p" id="tNext">${i<TOUR.length-1?'Дальше':'Понятно'}</button><button id="tClose">Закрыть</button></div>`;el.style.display='block';
+ setTimeout(()=>{const r=tg.getBoundingClientRect(),w=el.offsetWidth,hh=el.offsetHeight;let top=r.bottom+10;if(top+hh>innerHeight-8)top=Math.max(8,r.top-hh-10);
+  el.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left))+'px';el.style.top=top+'px'},350)}
+
+/* ---------- события ---------- */
+const TB=[['res','Результат'],['scen','Сценарии'],['cmp','Сравнение сделок'],['chk','Проверка'],['met','Методика']];
+$('#nv').innerHTML=TB.map(([k,l])=>`<button data-t="${k}">${l}</button>`).join('');
+const tt=document.body.appendChild(document.createElement('div'));tt.id='tt';
+function tip(el){tt.textContent=el.dataset.tip;tt.style.display='block';const r=el.getBoundingClientRect();tt.style.left=Math.max(8,Math.min(innerWidth-tt.offsetWidth-8,r.left))+'px';tt.style.top=(r.bottom+tt.offsetHeight+10<innerHeight?r.bottom+6:r.top-tt.offsetHeight-6)+'px'}
+['mouseover','focusin'].forEach(n=>document.addEventListener(n,e=>{const t=e.target.closest&&e.target.closest('.tp');t?tip(t):tt.style.display='none'}));addEventListener('scroll',()=>tt.style.display='none',true);
+document.addEventListener('click',ev=>{const t=ev.target,c=s=>t.closest(s);let x;
+ if(x=c('.tp')){ev.preventDefault();tip(x);return}
+ if(x=c('[data-t]')){S.tab=x.dataset.t;render();return}
+ if(x=c('[data-d]')){const i=+x.dataset.d;if(i<0)return;if(i!=S.i){S.i=i;S.man=null;form();deals();recalc()}if(x.closest('#t-cmp')){S.tab='res';render()}return}
+ if(x=c('[data-rs]')){ev.preventDefault();const[s,k]=x.dataset.rs.split(':');if(s=='d')S.D[S.i][k]=D0[S.i][k];else S.G[k]=G0[k];form();recalc();return}
+ if(x=c('#rsDeal')){S.D[S.i]=structuredClone(D0[S.i]);form();recalc();return}
+ if(x=c('#rsAll')||c('#rsAll2')){S.D=structuredClone(D0);S.G={...G0};S.man=null;form();recalc();toast('Все параметры сброшены');return}
+ if(x=c('[data-cp]')){const{H,R}=table(x.dataset.cp);copy([H,...R].map(r=>r.map(fmtX).join('\t')).join('\n'));return}
+ if(x=c('[data-dl]')){const{H,R,f}=table(x.dataset.dl);download(f,[H,...R].map(r=>r.map(v=>{const s=fmtX(v);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(';')).join('\r\n'));return}
+ if(x=c('#cpSum')){copy(summary());return}
+ if(x=c('#bChk')){S.tab='chk';render();$('#out').scrollIntoView({behavior:'smooth'});return}
+ if(x=c('#bTour')){tour(0);return}
+ if(x=c('#tNext')){tour(tourI+1);return}if(x=c('#tClose')){tour(-1);return}
+ if(x=c('#manRec')){startMan();return}if(x=c('#manOff')){S.man=null;$('#dMan').open=false;$('#man').innerHTML='';return}
+});
+document.addEventListener('input',ev=>{const t=ev.target,s=t.dataset.s;
+ if(t.id=='scX'){const v=parseFloat(t.value);if(v>=0&&v<=100){S.X=v;clearTimeout(tmr);tmr=setTimeout(rScen,300)}return}
+ if(!s)return;const o=s=='d'?S.D[S.i]:S.G,k=t.dataset.k;
+ o[k]=t.type=='checkbox'?(t.checked?1:0):(t.type=='month'||t.tagName=='SELECT')?t.value:parseFloat(String(t.value).replace(',','.'));
+ if(k=='ct'){form()}marks();later()});
+document.addEventListener('change',ev=>{const t=ev.target;
+ if(t.id=='scM'){S.scM=t.value;rScen()}if(t.id=='scI'){S.sI=t.checked?1:0;rScen()}if(t.id=='scR'){S.sR=t.checked?1:0;rScen()}if(t.id=='trnM'){S.trn=t.value;$('#trn').innerHTML='<p class="ld">Считаю…</p>';after(rTrn)}});
+addEventListener('keydown',e=>{if(e.key=='Escape'&&tourI>=0)tour(-1)});
+
+/* ---------- старт ---------- */
+$('#ver').textContent=MODEL_VERSION;
+{const ok=CHECKS.filter(c=>c.ok).length,b=$('#bChk');b.className='bdg '+(ok==CHECKS.length?'ok':'no');b.textContent=(ok==CHECKS.length?'✔ ':'✖ ')+ok+' из '+CHECKS.length+' проверок пройдено'}
+form();recalc();
+if(!LS.get('bondTourDone'))setTimeout(()=>tour(0),600);
+
+</script>
+</body></html>
