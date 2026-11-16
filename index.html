@@ -192,6 +192,7 @@ details.dt[open]>summary{border-radius:12px 12px 0 0}
 nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}nav button{white-space:nowrap}
 @media(max-width:600px){#ab{padding:10px 13px;font-size:0}#ab::before{content:'💬';font-size:18px}.hero p{display:none}}#aw{z-index:71;background:var(--cd2);box-shadow:0 12px 36px rgba(0,0,0,.55)}
 .fl{align-items:end}.f label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+pre.sum{white-space:pre-wrap;font:13.5px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;margin:0 0 6px;color:var(--fg)}
 #tt{z-index:80;background:#e6edf3;color:#0d1117}
 </style></head><body><main>
 <header class="hero"><div><h1>Калькулятор размещения облигаций</h1>
@@ -517,6 +518,7 @@ function rRes(){const g=S.G,{d,e}=S.res[S.i],cap0=e.cap0>1e-12;
   <div class="c"><span class="kl">${tp('Капитал','Капитал')}</span><b>${M(e.cap0)}</b><span class="mu">на старте · средний ${M(e.avg)}</span></div></div>
  ${e.pass?'':`<p class="er">Ни одно распределение не проходит оба порога — показан вариант с наибольшей прибылью.</p>`}
  <div class="c why"><h3>Почему так</h3><ul>${why(d,g,e).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+ <details class="dt" id="dSum"><summary>Резюме для комитета</summary><div class="c"><pre class="sum">${esc(summary())}</pre><div class="row" style="margin-bottom:0"><button class="gh" data-cpsum="1">⧉ Скопировать резюме</button><span class="mu">10 строк для письма</span></div></div></details>
  <div class="g2"><div class="c" id="shadow"><h3>Цена ограничений</h3><p class="ld">Считаю…</p></div>
  <div class="c" id="needs"><h3>Чтобы взять больше на баланс</h3><p class="ld">Считаю…</p></div></div>
  <h2 class="sec">Подробности</h2>
@@ -684,14 +686,14 @@ async function copy(txt){try{await navigator.clipboard.writeText(txt);toast('С�
 function download(name,txt){const b=new Blob(['﻿'+txt],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
 function summary(){const{d,e}=S.res[S.i],g=S.G,bd=binding(d,g,e),cd=chD(S.i),cg=chG();
  const lim={di:'спрос институционалов',dr:'спрос частных',lim:'лимит на заёмщика',V:'объём выпуска',roe:'порог ROE',irr:'порог IRR'};
- return [`Сделка: ${d.n} (${d.rt}), выпуск ${B(d.V)}, ${d.T} мес., купон ${d.ct=='fixed'?'фикс '+N(d.cv)+'%':'КС + '+N(d.cv)+' п.п.'}.`,
+ return [`Сделка: ${d.n} (${d.rt}), выпуск ${B(d.V)}, ${d.T} мес., купон ${d.ct=='fixed'?'фикс '+N(d.cv)+'%.':'КС + '+N(d.cv)+' п.п.'}`,
  `Вердикт: ${e.pass?'проходит':'не проходит'} пороги банка (IRR ≥ ${N(g.irrT)}%, ROE ≥ ${N(g.roeT)}%).`,
  `Распределение: институционалы ${B(e.a)}, частные ${B(e.b)}, баланс на перепродажу ${B(e.q)}, до погашения ${B(e.h)}, не распределено ${B(e.un)}.`,
  `Прибыль после налога: ${M(e.net)} за срок.`,
  `IRR на капитал: ${iv(e)}; ROE годовой: ${P(e.roe)}.`,
  `Капитал: на старте ${M(e.cap0)}, средний ${M(e.avg)}.`,
  `Что ограничивает: ${bd.map(k=>lim[k]).join(', ')||'ничего не упирается'}.`,
- `Допущения: 90% институционалам — ${SEL.psb.find(x=>x[0]==g.psb)[1]}; доход на капитал — ${SEL.kin.find(x=>x[0]==g.kin)[1]}; IRR — ${SEL.irrB.find(x=>x[0]==g.irrB)[1]}; КС ${N(g.k1)}/${N(g.k2)}/${N(g.k3)}/${N(g.k4)}%.`,
+ `Допущения: 90% институционалам — ${SEL.psb.find(x=>x[0]==g.psb)[1]}; капитал × фондирование — ${SEL.kin.find(x=>x[0]==g.kin)[1]}; IRR — ${SEL.irrB.find(x=>x[0]==g.irrB)[1]}; КС ${N(g.k1)}/${N(g.k2)}/${N(g.k3)}/${N(g.k4)}%.`,
  `Изменённые параметры: ${cd.length+cg.length?[...cd,...cg].map(k=>LBL[k]+' = '+(SEL[k]?SEL[k].find(x=>x[0]==(cd.includes(k)?d[k]:g[k]))[1]:fmtX(cd.includes(k)?d[k]:g[k]))).join('; '):'нет, исходные данные'}.`,
  `Модель v${MODEL_VERSION}, расчёт ${new Date().toLocaleDateString('ru-RU')}, самопроверки ${CHECKS.filter(c=>c.ok).length}/${CHECKS.length}. Учебные данные.`].join('\n')}
 
@@ -730,7 +732,7 @@ document.addEventListener('click',ev=>{const t=ev.target,c=s=>t.closest(s);let x
  if(x=c('#rsAll')||c('#rsAll2')){S.D=structuredClone(D0);S.G={...G0};S.man=null;form();recalc();toast('Все параметры сброшены');return}
  if(x=c('[data-cp]')){const{H,R}=table(x.dataset.cp);copy([H,...R].map(r=>r.map(fmtX).join('\t')).join('\n'));return}
  if(x=c('[data-dl]')){const{H,R,f}=table(x.dataset.dl);download(f,[H,...R].map(r=>r.map(v=>{const s=fmtX(v);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(';')).join('\r\n'));return}
- if(x=c('#cpSum')){copy(summary());return}
+ if(x=c('#cpSum')||c('[data-cpsum]')){copy(summary());return}
  if(x=c('#bChk')){S.tab='chk';render();$('#out').scrollIntoView({behavior:'smooth'});return}
  if(x=c('#bTour')){tour(0);return}
  if(x=c('#ab')){if(tourI>=0)tour(-1)}
