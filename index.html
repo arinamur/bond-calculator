@@ -193,6 +193,11 @@ nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}nav button{white-space
 @media(max-width:600px){#ab{padding:10px 13px;font-size:0}#ab::before{content:'💬';font-size:18px}.hero p{display:none}}#aw{z-index:71;background:var(--cd2);box-shadow:0 12px 36px rgba(0,0,0,.55)}
 .fl{align-items:end}.f label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 pre.sum{white-space:pre-wrap;font:13.5px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;margin:0 0 6px;color:var(--fg)}
+details.vsum{margin-top:12px;border-top:1px solid var(--bd);padding-top:10px}
+details.vsum>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer;color:var(--mu);font-size:14px}
+details.vsum>summary::-webkit-details-marker{display:none}
+details.vsum>summary>span::before{content:'▸ ';}details.vsum[open]>summary>span::before{content:'▾ '}
+details.vsum>summary:hover>span{color:var(--fg)}details.vsum pre{margin-top:10px}
 #tt{z-index:80;background:#e6edf3;color:#0d1117}
 </style></head><body><main>
 <header class="hero"><div><h1>Калькулятор размещения облигаций</h1>
@@ -506,10 +511,11 @@ function rRes(){const g=S.G,{d,e}=S.res[S.i],cap0=e.cap0>1e-12;
  const L=e.L,pl=[['Комиссия с институционалов (доля банка)',L.com],['Отдаём институционалам',L.pay],['Комиссия с частных на размещении',L.rcm],['Экосистемный доход (частные, размещение)',L.eco],['Комиссия с объёма на баланс',L.fbal],['Купонный доход',L.cpn],['Фондирование',L.fnd],['Ожидаемые потери',L.el],['Доход с продаж с баланса',L.sec],[kinL,L.kin]].filter(r=>r[0]&&(Math.abs(r[1])>1e-12||['Купонный доход','Фондирование'].includes(r[0])));
  $('#t-res').innerHTML=`
  <div class="vd ${e.pass?'ok':'no'}" id="verdict">
-  <div class="vt"><span><b style="margin-right:8px">${esc(d.n)}</b><span class="pill ${e.pass?'ok2':'no2'}">${e.pass?'✔ Проходит пороги':'✖ Не проходит пороги'}</span></span><button class="gh" id="cpSum" title="10 строк для письма: вердикт, распределение, метрики, допущения">⧉ Резюме для комитета</button></div>
+  <div class="vt"><span><b style="margin-right:8px">${esc(d.n)}</b><span class="pill ${e.pass?'ok2':'no2'}">${e.pass?'✔ Проходит пороги':'✖ Не проходит пороги'}</span></span></div>
   <div class="h">Продаём <b>${B(e.a+e.b)}</b> инвесторам, берём <b>${B(e.q+e.h)}</b> на баланс</div>
   <div class="bar" role="img" aria-label="Распределение выпуска по каналам">${SEG.map(([k,,c])=>`<div style="width:${Math.max(0,e[k])/d.V*100}%;background:var(${c})" title="${B(e[k])}"></div>`).join('')}</div>
   <div class="lg">${SEG.filter(([k])=>e[k]>1e-9).map(([k,l,c])=>`<span><i class="sw" style="background:var(${c})"></i>${l} <b>${N(e[k])}</b></span>`).join('')}<span class="mu">млрд ₽ из ${N(d.V)}</span></div>
+  <details id="dSum" class="vsum"><summary><span>Резюме для комитета</span><button class="gh" data-cpsum="1" title="10 строк для письма">⧉ Скопировать</button></summary><pre class="sum">${esc(summary())}</pre></details>
  </div>
  <div class="kp">
   <div class="c"><span class="kl">${tp('Прибыль после налога','Прибыль')}</span><b>${M(e.net)}</b><span class="mu">после налога, за ${d.T} мес.</span></div>
@@ -518,7 +524,6 @@ function rRes(){const g=S.G,{d,e}=S.res[S.i],cap0=e.cap0>1e-12;
   <div class="c"><span class="kl">${tp('Капитал','Капитал')}</span><b>${M(e.cap0)}</b><span class="mu">на старте · средний ${M(e.avg)}</span></div></div>
  ${e.pass?'':`<p class="er">Ни одно распределение не проходит оба порога — показан вариант с наибольшей прибылью.</p>`}
  <div class="c why"><h3>Почему так</h3><ul>${why(d,g,e).map(x=>`<li>${x}</li>`).join('')}</ul></div>
- <details class="dt" id="dSum"><summary>Резюме для комитета</summary><div class="c"><pre class="sum">${esc(summary())}</pre><div class="row" style="margin-bottom:0"><button class="gh" data-cpsum="1">⧉ Скопировать резюме</button><span class="mu">10 строк для письма</span></div></div></details>
  <div class="g2"><div class="c" id="shadow"><h3>Цена ограничений</h3><p class="ld">Считаю…</p></div>
  <div class="c" id="needs"><h3>Чтобы взять больше на баланс</h3><p class="ld">Считаю…</p></div></div>
  <h2 class="sec">Подробности</h2>
@@ -732,7 +737,7 @@ document.addEventListener('click',ev=>{const t=ev.target,c=s=>t.closest(s);let x
  if(x=c('#rsAll')||c('#rsAll2')){S.D=structuredClone(D0);S.G={...G0};S.man=null;form();recalc();toast('Все параметры сброшены');return}
  if(x=c('[data-cp]')){const{H,R}=table(x.dataset.cp);copy([H,...R].map(r=>r.map(fmtX).join('\t')).join('\n'));return}
  if(x=c('[data-dl]')){const{H,R,f}=table(x.dataset.dl);download(f,[H,...R].map(r=>r.map(v=>{const s=fmtX(v);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(';')).join('\r\n'));return}
- if(x=c('#cpSum')||c('[data-cpsum]')){copy(summary());return}
+ if(x=c('[data-cpsum]')){ev.preventDefault();copy(summary());return}
  if(x=c('#bChk')){S.tab='chk';render();$('#out').scrollIntoView({behavior:'smooth'});return}
  if(x=c('#bTour')){tour(0);return}
  if(x=c('#ab')){if(tourI>=0)tour(-1)}
