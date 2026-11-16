@@ -142,7 +142,7 @@ body{-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 main{padding-top:16px}
 .c{box-shadow:none;border-radius:14px;padding:14px 16px}
 .hero{background:none;border:0;border-radius:0;padding:4px 2px 12px;margin:0;align-items:center}
-.hero h1{font-size:21px;color:var(--fg);margin:0}.hero p{font-size:13.5px;color:var(--mu)}.hero .mu2{display:none}
+.hero h1{font-size:21px;color:var(--fg);margin:0}.hero p{display:none}.hero .mu2{display:none}
 .bdg{background:var(--cd);font-weight:500;padding:5px 10px}
 button.dc{background:var(--cd);border-color:var(--bd);padding:10px 14px}
 button.dc.on{background:var(--cd2);border-color:var(--ac)}
@@ -190,7 +190,7 @@ details.dt[open]>summary{border-radius:12px 12px 0 0}
 .hl{outline:2px solid var(--ac)!important;outline-offset:4px;z-index:auto}
 #ab{z-index:70}
 nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}nav button{white-space:nowrap}
-@media(max-width:600px){#ab{padding:10px 13px;font-size:0}#ab::before{content:'💬';font-size:18px}.hero p{display:none}}#aw{z-index:71;background:var(--cd2);box-shadow:0 12px 36px rgba(0,0,0,.55)}
+@media(max-width:600px){.hm{max-width:100%}#ab{padding:10px 13px;font-size:0}#ab::before{content:'💬';font-size:18px}.hero p{display:none}}#aw{z-index:71;background:var(--cd2);box-shadow:0 12px 36px rgba(0,0,0,.55)}
 .fl{align-items:end}.f label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 pre.sum{white-space:pre-wrap;font:13.5px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;margin:0 0 6px;color:var(--fg)}
 details.vsum{margin-top:12px;border-top:1px solid var(--bd);padding-top:10px}
@@ -544,8 +544,8 @@ function rNeeds(d,g,e){const el=$('#needs');if(!el)return;const tg=needTarget(d)
  if(tg<=1e-9){el.innerHTML=h+'<p class="mu">Спрос покрывает весь выпуск — брать на баланс нечего.</p>';return}
  if(bal>=tg-1e-9){el.innerHTML=h+`<p class="mu">Уже берём всё, что можно: ${B(bal)}.</p>`;return}
  const n=needs(d,g),nm={cv:d.ct=='fixed'?'Ставка купона':'Спред к КС',sr:'Темп продаж',rw:'Риск-вес'},op={cv:'≥',sr:'≥',rw:'≤'};
- el.innerHTML=h+`<p class="mu sub">Взять ${B(tg)} вместо ${N(bal)} и пройти пороги — хватит одного:</p>`+
- n.map(x=>`<div class="sp"><span>${nm[x.k]} <span class="mu">сейчас ${N(x.cur)}</span></span><b>${x.r?(x.r.edge?'уже так':op[x.k]+' '+N(x.r.v,x.k=='rw'?1:2)+' '+x.u):'не находится'}</b></div>`).join('')}
+ el.innerHTML=h+`<p class="mu sub">Взять ${B(tg)} вместо ${N(bal)} и пройти пороги — хватит одного из условий:</p>`+
+ n.map(x=>`<div class="sp"><span>${nm[x.k]} <span class="mu">сейчас ${N(x.cur)}</span></span><b${x.r?'':' class="zer" title="Даже при очень высоком значении сделка с таким балансом не проходит пороги"'}>${x.r?(x.r.edge?'уже так':op[x.k]+' '+N(x.r.v,x.k=='rw'?1:2)+' '+x.u):'не поможет'}</b></div>`).join('')+(n.some(x=>!x.r)?`<p class="mu sub" style="margin-top:8px">«Не поможет» — даже если поднять этот параметр в 10 раз, сделка с таким балансом не проходит пороги.</p>`:'')}
 
 /* помесячные потоки (по раскрытию) */
 document.addEventListener('toggle',ev=>{const t=ev.target;if(!t.open)return;
@@ -581,20 +581,29 @@ document.addEventListener('input',ev=>{const t=ev.target;if(t.dataset.man==null)
 
 /* ---------- карта решений ---------- */
 function rHeat(){const el=$('#hm');if(!el)return;el.innerHTML='<p class="ld">Считаю все варианты…</p>';
- after(()=>{const{d,e}=S.res[S.i],g=S.G,b=opt(d,g,{grid:true}),gr=b.grid,mq=Math.min(d.lim,d.V),n=Math.floor(mq/g.step+1e-9)+1;
+ after(()=>{const{d,e}=S.res[S.i],g=S.G,b=opt(d,g,{grid:true}),gr=b.grid,mq=Math.min(d.lim,d.V),n=Math.floor(mq/g.step+1e-9)+1,st=g.step;
   const ok=gr.filter(x=>x.ok),mn=Math.min(...ok.map(x=>x.net)),mxv=Math.max(...ok.map(x=>x.net));
-  el.innerHTML=`<p class="mu" style="margin-top:0">Каждая клетка — один вариант: по горизонтали объём «на перепродажу», по вертикали «до погашения» (институционалы и частные добираются до спроса). Цвет — прибыль после налога, серым — варианты, не проходящие пороги. Кружок — выбранный вариант. Нажмите на клетку, чтобы открыть её в ручном режиме.</p>
-  <div class="mu" style="font-size:12px">↑ до погашения, 0–${B(mq)} · → на перепродажу, 0–${B(mq)}</div><canvas class="hm" id="hmc" width="${n*Math.max(2,Math.floor(480/n))}" height="${n*Math.max(2,Math.floor(480/n))}" aria-label="Карта решений"></canvas>
-  <div class="lg" style="margin-top:6px"><span><i class="sw" style="background:#c9e6ee"></i>меньше прибыль</span><span><i class="sw" style="background:#0f5c6e"></i>больше прибыль (${M(mxv)})</span><span><i class="sw" style="background:var(--c5)"></i>не проходит пороги</span></div><p class="mu" id="hmi">Наведите на клетку.</p>`;
-  const cv=$('#hmc'),cx=cv.getContext('2d'),cs=cv.width/n,css=getComputedStyle(document.documentElement),grey=css.getPropertyValue('--c5').trim()||'#b3bcc6';
-  const lerp=(a,b,t)=>Math.round(a+(b-a)*t),col=t=>`rgb(${lerp(201,15,t)},${lerp(230,92,t)},${lerp(238,110,t)})`;
+  const I=x=>Math.round(x.q/st),J=x=>Math.round(x.h/st),bi=Math.round(e.q/st),bj=Math.round(e.h/st);
+  /* приближение: показываем область проходящих вариантов с запасом, а не весь лимит */
+  const mi=Math.max(bi,...ok.map(I)),mj=Math.max(bj,...ok.map(J)),minC=Math.min(n,12);
+  const nx=S.hmFull?n:Math.min(n,Math.max(minC,Math.ceil((mi+1)*1.6)+2)),ny=S.hmFull?n:Math.min(n,Math.max(minC,Math.ceil((mj+1)*1.6)+2)),zoomed=nx<n||ny<n;
+  el.innerHTML=`<p class="mu" style="margin-top:0">Каждая клетка — один вариант распределения. Цвет — прибыль: чем ярче, тем больше. Серые клетки не проходят пороги. Кружок — рекомендация. Нажмите на клетку, чтобы открыть её в ручном режиме.</p>
+  <div class="row" style="margin:4px 0 6px">${zoomed||S.hmFull&&n>minC?'':'<span hidden>'}<button class="gh" id="hmT">${S.hmFull?'Приблизить к рекомендации':'Показать весь лимит '+N(mq)+' млрд'}</button>${zoomed||S.hmFull&&n>minC?'':'</span>'}${zoomed?`<span class="mu">показано до ${N((nx-1)*st)} млрд по горизонтали и ${N((ny-1)*st)} по вертикали</span>`:''}</div>
+  <canvas class="hm" id="hmc" width="1120" height="760" aria-label="Карта решений"></canvas>
+  <div class="lg" style="margin-top:6px"><span><i class="sw" style="background:rgb(29,58,68)"></i>меньше прибыль</span><span><i class="sw" style="background:rgb(88,196,216)"></i>больше (${M(mxv)})</span><span><i class="sw" style="background:#3a4452"></i>не проходит пороги</span></div><p class="mu" id="hmi">Наведите на клетку.</p>`;
+  const cv=$('#hmc'),cx=cv.getContext('2d'),L=90,Bm=60,T=10,R=10,W=cv.width-L-R,H=cv.height-T-Bm,cw=W/nx,ch=H/ny;
+  const lerp=(a,b,t)=>Math.round(a+(b-a)*t),col=t=>`rgb(${lerp(29,88,t)},${lerp(58,196,t)},${lerp(68,216,t)})`;
   cx.clearRect(0,0,cv.width,cv.height);const idx={};
-  for(const x of gr){const i=Math.round(x.q/g.step),j=Math.round(x.h/g.step);idx[i+','+j]=x;cx.fillStyle=x.ok?col(mxv>mn?(x.net-mn)/(mxv-mn):1):grey;cx.fillRect(i*cs,cv.height-(j+1)*cs,cs,cs)}
-  const bi=Math.round(e.q/g.step),bj=Math.round(e.h/g.step);cx.strokeStyle='#e8590c';cx.lineWidth=Math.max(2,cs/3);cx.beginPath();cx.arc((bi+.5)*cs,cv.height-(bj+.5)*cs,Math.max(5,cs*1.2),0,7);cx.stroke();
-  const at=ev2=>{const r=cv.getBoundingClientRect(),i=Math.floor((ev2.clientX-r.left)/r.width*n),j=Math.floor((r.bottom-ev2.clientY)/r.height*n);return idx[i+','+j]};
+  for(const x of gr){const i=I(x),j=J(x);idx[i+','+j]=x;if(i>=nx||j>=ny)continue;cx.fillStyle=x.ok?col(mxv>mn?(x.net-mn)/(mxv-mn):1):'#3a4452';const x0=Math.round(L+i*cw),x1=Math.round(L+(i+1)*cw),y0=Math.round(T+H-(j+1)*ch),y1=Math.round(T+H-j*ch);cx.fillRect(x0,y0,x1-x0,y1-y0)}
+  cx.strokeStyle='#ff8a3d';cx.lineWidth=4;cx.beginPath();cx.arc(L+(bi+.5)*cw,T+H-(bj+.5)*ch,Math.max(9,Math.min(cw,ch)*.9),0,7);cx.stroke();
+  /* оси */
+  cx.fillStyle='#8b97a4';cx.font='22px system-ui,sans-serif';cx.textAlign='center';const tk=k=>{const s=[1,2,5,10,20,50].map(v=>v*st).find(v=>v*(k-1)/st/ (k-1)>=0&&(k-1)*st/v<=6)||st;return s};
+  const sx=tk(nx),sy=tk(ny);for(let v=0;v<=(nx-1)*st+1e-9;v+=sx)cx.fillText(N(v),L+(v/st+.5)*cw,T+H+26);
+  cx.textAlign='right';for(let v=0;v<=(ny-1)*st+1e-9;v+=sy)cx.fillText(N(v),L-8,T+H-(v/st+.5)*ch+7);
+  cx.textAlign='center';cx.fillText('на перепродажу, млрд ₽ →',L+W/2,T+H+54);cx.save();cx.translate(24,T+H/2);cx.rotate(-Math.PI/2);cx.fillText('до погашения, млрд ₽ →',0,0);cx.restore();
+  const at=ev2=>{const r=cv.getBoundingClientRect(),sx2=cv.width/r.width,px=(ev2.clientX-r.left)*sx2-L,py=T+H-(ev2.clientY-r.top)*sx2,i=Math.floor(px/cw),j=Math.floor(py/ch);return i>=0&&j>=0&&i<nx&&j<ny?idx[i+','+j]:null};
   cv.onmousemove=ev2=>{const x=at(ev2);$('#hmi').innerHTML=x?`Перепродажа ${B(x.q)}, до погашения ${B(x.h)} → прибыль ${M(x.net)}, ROE ${P(x.roe)}, IRR ${iv(x)} · ${x.ok?'<span class="pos">проходит</span>':'<span class="neg">не проходит</span>'}`:'Вне лимита'};
   cv.onclick=ev2=>{const x=at(ev2);if(!x)return;S.man={a:x.a,b:x.b,q:x.q,h:x.h};$('#dMan').open=true;rMan();$('#dMan').scrollIntoView({behavior:'smooth',block:'start'})}})}
-
 /* ---------- сценарии ---------- */
 function scenSet(){const d=S.D[S.i],X=S.X/100;
  if(S.scM=='vol')return[['Спрос = выпуск −'+S.X+'%',scenDemand(d,-X,'vol')],['Спрос = выпуску',scenDemand(d,0,'vol')],['Спрос = выпуск +'+S.X+'%',scenDemand(d,X,'vol')],['Базовый спрос',d]];
@@ -742,6 +751,7 @@ document.addEventListener('click',ev=>{const t=ev.target,c=s=>t.closest(s);let x
  if(x=c('#bTour')){tour(0);return}
  if(x=c('#ab')){if(tourI>=0)tour(-1)}
  if(x=c('#tNext')){tour(tourI+1);return}if(x=c('#tClose')){tour(-1);return}
+ if(x=c('#hmT')){S.hmFull=!S.hmFull;rHeat();return}
  if(x=c('#manRec')){startMan();return}if(x=c('#manOff')){S.man=null;$('#dMan').open=false;$('#man').innerHTML='';return}
 });
 document.addEventListener('input',ev=>{const t=ev.target,s=t.dataset.s;
