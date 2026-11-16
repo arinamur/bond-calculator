@@ -174,7 +174,7 @@ ol.mt li{margin:5px 0}
   if(s.day!==day)s={day,n:0,t:[]};s.t=(s.t||[]).filter(x=>now-x<60000);if(s.t.length>=10)return'Не больше 10 вопросов в минуту. Подождите немного.';if(s.n>=50)return'Лимит 50 вопросов в день исчерпан.';
   s.t.push(now);s.n++;try{localStorage.setItem('askLim',JSON.stringify(s))}catch(e){}return null};
  async function ask(q){q=q.trim().slice(0,500);if(!q||busy)return;const l=lim();add(q,'u');if(l){add(l,'a');return}
-  busy=true;const p=add('Думаю…','a');
+  busy=true;document.getElementById('as').hidden=true;const p=add('Думаю…','a');
   try{if(location.protocol=='file:')throw new Error('file');
    const r=await fetch('/.netlify/functions/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,state:window.calcState?window.calcState():null,history:hist.slice(-6)})});
    const j=await r.json().catch(()=>({}));p.textContent=j.answer||'Ассистент сейчас занят, попробуйте через минуту.';
