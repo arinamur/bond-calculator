@@ -471,7 +471,10 @@ function recalc(){S.ver++;const g=S.G;
  if(cur.err){cur.err.forEach(x=>{const el=$(`.f[data-k="${x.k}"]`);el&&el.classList.add('bad')});$('#er').innerHTML=cur.err.map(x=>`<p class="er">⚠ ${esc(x.m)}</p>`).join('')}else $('#er').innerHTML='';
  if(S.man&&!cur.err)clampMan();
  deals();render()}
-function render(){const t=S.tab;$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));$$('section').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
+function render(){const t=S.tab,sec=$('#t-'+t),y=scrollY,op=[...sec.querySelectorAll('details[open][id]')].map(x=>x.id);
+ sec.style.minHeight=sec.offsetHeight+'px';render0();op.forEach(id=>{const el=document.getElementById(id);if(el&&!el.open)el.open=true});
+ scrollTo(scrollX,y);clearTimeout(sec._mh);sec._mh=setTimeout(()=>{sec.style.minHeight=''},1500)}
+function render0(){const t=S.tab;$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));$$('section').forEach(s=>s.classList.toggle('on',s.id=='t-'+t));
  const cur=S.res[S.i];if(cur.err&&t!='met'&&t!='chk'){$('#t-'+t).innerHTML='<p class="mu">Исправьте ошибки в параметрах — расчёт обновится автоматически.</p>';return}
  ({res:rRes,scen:rScen,cmp:rCmp,chk:rChk,met:rMet})[t]()}
 const after=(fn)=>{const v=S.ver;setTimeout(()=>{if(v===S.ver)fn()},30)};
